@@ -3,6 +3,7 @@
 - No logging
 - No exception handling
 - No support for multiple projects (= tasks) yet
+- No arg parsing yet - has hardcoded project name & input file values.
 
 
 # Browser with debug tools for manipulation via playwright
