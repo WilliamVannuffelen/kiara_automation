@@ -7,6 +7,8 @@
 
 # Browser with debug tools for manipulation via playwright
 
+
+## Boot up headful chrome browser with debugging enabled
 ```sh
 # zshrc
 alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222"
@@ -14,23 +16,29 @@ alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --r
 chrome
 ```
 
+## playwright plugs into this:
+
+Required due to MFA layer preventing full automation.
 ```python
 async def run(playwright: Playwright):
     browser = await playwright.chromium.connect_over_cdp("http://localhost:9222")
     return browser
 ```
 
-# Playwright browser to 'autogenerate' code
-Doesn't work too well, but can be helpful in some instances
+# Snippet to use playwright browser to 'autogenerate' code
+Doesn't work too well, but can be helpful in some instances during development.
 
 ```sh
 playwright codegen https://kiara.vlaanderen.be
 ```
 
-# How to?
+# How to - Update Kiara timesheets
 Input = xlsx file formatted as such.
 
 Column A is optional
+
+- yyyy-MM-dd formatted dates
+- Timespent in hours, minimum increments of .25 hours
 
 ![alt text](image-1.png)
 
@@ -41,7 +49,7 @@ chrome # assuming alias is set, see above if not
 ```
 
 ## Navigate to Kiara and authenticate with ACM/IDM
-Make sure you're on the landing page:
+Make sure you're on the landing page in the chrome debug browser:
 
 ![alt text](image-2.png)
 
