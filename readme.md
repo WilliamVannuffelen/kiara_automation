@@ -1,3 +1,8 @@
+# WIP
+
+- No logging
+- No exception handling
+- No support for multiple projects (= tasks) yet
 
 
 # Browser with debug tools for manipulation via playwright
