@@ -6,7 +6,7 @@ Contains reusable helper functions commonly needed for automation.
 
 - AzureDevopsLogger: Azure DevOps pipeline output compatible logger
 
-- init_logger: A logger init wrapper
+- init_logging: define logging
 
 - _terminate_script: Controlled process termination with success/fail return code
 
@@ -19,15 +19,15 @@ Contains reusable helper functions commonly needed for automation.
 # Usage
 
 ```python
-import lib.helpers as help
+from src.lib.helpers import init_logging
 import lib.azhelpers as azhelp
 
 
 if __name__ == "__main__":
+    init_logging(name="main", log_level="debug")
     try:
-        log = help.init_logger(
-            log_class="azuredevops", log_formatter="azuredevops", log_level="debug"
-        )
+        log = logging.getLogger("main")
+        log.info("Script started.")
     except Exception as e:
         print(f"Failed to initiate logger.")
         print(e)

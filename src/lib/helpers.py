@@ -4,11 +4,12 @@ from lib.ado_logging import AzureDevOpsLogFormatter, AzureDevopsLogger
 import sys
 import os
 
-log = logging.getLogger("main")
 
-
-def init_logger(
-    log_class: str = "default", log_formatter: str = "default", log_level: str = "info"
+def init_logging(
+    name: str,
+    log_class: str = "default",
+    log_formatter: str = "default",
+    log_level: str = "info",
 ) -> Logger:
     match log_class.lower():
         case "azuredevops":
@@ -23,28 +24,21 @@ def init_logger(
         case _:
             stream_handler = logging.StreamHandler()
 
+    log_levels = {
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "error": logging.ERROR,
+        "critical": logging.CRITICAL,
+    }
+
     logging.basicConfig(
-        format="%(asctime)20s - %(levelname)s - %(name)s - %(module)s.%(funcName)s - %(message)s",
+        format="%(asctime)20s - %(levelname)s - %(name)s.%(funcName)s - %(message)s",
         handlers=[stream_handler],
+        level=log_levels.get(log_level.lower(), logging.INFO),
     )
-    log = logging.getLogger("main")
-
-    match log_level.lower():
-        case "debug":
-            log.setLevel(logging.DEBUG)
-        case "info":
-            log.setLevel(logging.INFO)
-        case "warning":
-            log.setLevel(logging.WARNING)
-        case "error":
-            log.setLevel(logging.ERROR)
-        case "critical":
-            log.setLevel(logging.CRITICAL)
-        case _:
-            log.setLevel(logging.INFO)
-
+    log = logging.getLogger(name)
     log.debug("Logger init done.")
-    return log
 
 
 def _terminate_script(exit_code: int) -> None:
