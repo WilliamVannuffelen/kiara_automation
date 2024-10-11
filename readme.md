@@ -1,4 +1,9 @@
-# WIP
+# 0.0.2
+- Added some logging
+- Added some exception handling
+- Refactored to be modular
+
+# 0.0.1
 
 - No logging
 - No exception handling
