@@ -20,7 +20,7 @@ from src.browser.locate import (
 from src.browser.navigate import open_timesheet_page, expand_project, collapse_project
 from src.lib.project_helpers import _format_date_silly, _format_timespan_silly
 from src.browser.update import add_work_item_entry, add_new_work_item
-
+from src.config.input import get_args
 
 def get_work_items(path: str, date: str):
     df = pd.read_excel(io=path, sheet_name=date, usecols="A:E")
@@ -28,7 +28,8 @@ def get_work_items(path: str, date: str):
 
 
 def main():
-    work_items = get_work_items("~/wvl/devel/tempo/t_upload.xlsx", "2024-09-30")
+    file_name, sheet_name = get_args()
+    work_items = get_work_items(file_name, "2024-09-30")
     asyncio.run(async_main(work_items))
 
 
@@ -74,9 +75,9 @@ async def async_main(work_items: list):
         #     else:
         #         await add_new_work_item(page, work_item, task_index, date_indices)
 
-        await collapse_project(
-            page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
-        )
+        #await collapse_project(
+        #    page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
+        #)
         await browser.close()
 
 
