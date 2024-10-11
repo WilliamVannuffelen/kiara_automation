@@ -3,6 +3,9 @@ from playwright.async_api import async_playwright, Playwright, Locator, Page
 import re
 import datetime
 import pandas as pd
+import lib.helpers as helpers
+import contextvars
+import uuid
 
 
 def get_work_items(path: str, date: str):
@@ -44,7 +47,6 @@ async def expand_project(page: Page, search_string: str) -> None:
 async def _format_date_silly(date: str):
     date_parts = date.split("-")
     date_parts = [re.sub(r"^0", "", part) for part in date_parts]
-    print(date_parts)
     return f"{date_parts[1]}-{date_parts[2]}"
 
 
@@ -81,7 +83,6 @@ async def _get_highest_work_item_index(page: Page, task_index: int):
     work_items = await page.query_selector_all(work_item_selector)
 
     last_item_name = await work_items[-1].get_attribute("name")
-    print(last_item_name)
 
     match = re.search(r"prestatie\[(\d+)\]", last_item_name)
     last_item_index = match.group(1)
@@ -89,7 +90,7 @@ async def _get_highest_work_item_index(page: Page, task_index: int):
     return last_item_index
 
 
-async def find_work_item(page: Page, work_item: dict, task_index: int) -> int | None:
+async def find_work_item(page: Page, work_item: dict, task_index: int, is_copy: bool = False, target_description: str = None) -> int | None:
     # lower because uppercase first char breaks kiara sorting :)
     description = (
         work_item["Description"].lower()
@@ -98,6 +99,7 @@ async def find_work_item(page: Page, work_item: dict, task_index: int) -> int | 
     )
 
     last_item_index = await _get_highest_work_item_index(page, task_index)
+    log.debug(f"Last item index in table '{last_item_index}'")
 
     item_index = None
     for i in range(0, int(last_item_index)):
@@ -105,15 +107,16 @@ async def find_work_item(page: Page, work_item: dict, task_index: int) -> int | 
             f'input[name="taak[{task_index}].prestatie[{i}].omschrijving"]'
         )
         val = await work_item_locator.get_attribute("value")
-        if val == description:
-            print(f"Found existing work item {description} at index {i}")
+        if val.lower() == description.lower():
+            if is_copy:
+                log.info(f"Found existing work item '{target_description}' at index '{i}'")
             item_index = i
             break
         else:
             continue
 
     if item_index is None:
-        print(f"No existing work item found for description '{description}'")
+        log.info(f"No existing work item found for description '{description}'")
         return None
     else:
         return item_index
@@ -136,11 +139,10 @@ async def add_work_item_entry(
     date_indices: dict,
     task_index: int,
     work_item_index: int,
-):
+) -> None:
     item_date = await _format_date_silly(work_item["Date"])
     try:
         column_index = date_indices[item_date]
-        print(column_index)
     except KeyError:
         print(f"Date {item_date} not found in selected week")
         return  # fix proper exc handling etc.
@@ -149,8 +151,15 @@ async def add_work_item_entry(
     )
 
     time_spent = await _format_timespan_silly(work_item["TimeSpent"])
-    await work_item_locator.fill(time_spent)
-    await work_item_locator.blur()
+    try:
+        await work_item_locator.fill(time_spent)
+        await work_item_locator.blur()
+        log.info(f"Added time to existing work item '{work_item["Description"]}' on '{work_item["Date"]}' - {time_spent}h")
+    except Exception as e:
+        log.error(f"Failed to add time to existing work item '{work_item['Description']}' on '{work_item['Date']}' - {time_spent}h")
+        log.error(e)
+  
+
 
 
 async def add_new_work_item(
@@ -167,23 +176,34 @@ async def add_new_work_item(
     description_locator = page.locator(
         f'input[name="taak[{task_index}].prestatie[1].omschrijving"]'
     )
-    copied_task_orig_name = await description_locator.get_attribute("value")
-    copied_task_name = f"Copy {copied_task_orig_name}"
+    copied_work_item_orig_name = await description_locator.get_attribute("value")
+    copied_work_item_name = f"Copy {copied_work_item_orig_name}"
+    log.debug(f"Target work item name: '{work_item['Description']}'")
 
-    await page.locator('img[alt="knop voeg nieuwe activiteit toe"]').click()
-    await page.wait_for_url(
-        "https://kiara.vlaanderen.be/Kiara/secure/tijdsregistratie/detailtijdsregistratie.do"
-    )
+    try:
+        await page.locator('img[alt="knop voeg nieuwe activiteit toe"]').click()
+        await page.wait_for_url(
+            "https://kiara.vlaanderen.be/Kiara/secure/tijdsregistratie/detailtijdsregistratie.do"
+        )
+        log.debug(f"Added new dummy work item '{copied_work_item_name}'")
+    except Exception as e:
+        log.error(f"Failed to add new dummy work item '{copied_work_item_name}'")
+        log.error(e)
 
     work_item_index = await find_work_item(
-        page, {"Description": copied_task_name}, task_index
+        page, {"Description": copied_work_item_name}, task_index, is_copy=True, target_description=work_item["Description"]
     )
 
     # update description
     description_locator = page.locator(
         f'input[name="taak[{task_index}].prestatie[{work_item_index}].omschrijving"]'
     )
-    await description_locator.fill(work_item["Description"])
+    try:
+        await description_locator.fill(work_item["Description"])
+        log.debug(f"Updated description of new work item '{work_item['Description']}'")
+    except Exception as e:
+        log.error(f"Failed to update description of new work item '{work_item['Description']}'")
+        log.error(e)
 
     # update jira ref
     line_item_locator = page.locator(
@@ -198,7 +218,7 @@ async def add_new_work_item(
 
 
 def main():
-    work_items = get_work_items("~/wvl/devel/tempo/timesheet_new2.xlsx", "2024-09-30")
+    work_items = get_work_items("~/wvl/devel/tempo/t_upload.xlsx", "2024-09-30")
     asyncio.run(async_main(work_items))
 
 
@@ -210,7 +230,7 @@ async def async_main(work_items: list):
 
         # start from home page after ACM/IDM logon:
         # navigate to timesheet page and expand relevant project
-        await open_timesheet_page(page, ctx)
+        #await open_timesheet_page(page, ctx)
 
         # grab task locator
         task_locator = await get_task_locator(
@@ -220,14 +240,16 @@ async def async_main(work_items: list):
         task_index = await get_task_index(task_locator)
 
         # open project
-        await expand_project(
-            page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
-        )
+        #await expand_project(
+        #    page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
+        #)
 
         # grab column indices for each date in the selected week
         date_indices = await get_date_column_indices(page)
 
         for work_item in work_items:
+            log.info(f"Processing work item '{work_item["Description"]}' for date '{work_item["Date"]}'")
+            log.debug(f"{work_item.items()}.")
             # check if item exists
             # if do: add time
             # if dont': make new
@@ -249,4 +271,12 @@ async def async_main(work_items: list):
 
 
 if __name__ == "__main__":
+    try:
+      log = helpers.init_logger(log_level="info")
+      log.info("Script started.")
+    except Exception as e:
+        print(f"Failed to initiate logger.")
+        print(e)
+        helpers._terminate_script(1)
+
     main()
