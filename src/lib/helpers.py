@@ -1,6 +1,6 @@
 import logging
 from logging import Logger
-from lib.ado_logging import AzureDevOpsLogFormatter, AzureDevopsLogger
+from src.lib.ado_logging import AzureDevOpsLogFormatter, AzureDevopsLogger
 import sys
 import os
 
