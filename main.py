@@ -74,7 +74,6 @@ async def async_main(work_items: list):
         #     else:
         #         await add_new_work_item(page, work_item, task_index, date_indices)
 
-        # testing unexpand (?) project
         await collapse_project(
             page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
         )
