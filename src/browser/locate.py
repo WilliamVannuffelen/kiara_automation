@@ -78,7 +78,7 @@ async def find_work_item(
     )
 
     last_item_index = await _get_highest_work_item_index(page, task_index)
-    log.debug(f"Last item index in table '{last_item_index}'")
+    log.debug(f"Last item index in current project table '{last_item_index}'")
 
     item_index = None
     for i in range(0, int(last_item_index)):
@@ -89,7 +89,7 @@ async def find_work_item(
         if val.lower() == description.lower():
             if is_copy:
                 log.info(
-                    f"Found existing work item '{target_description}' at index '{i}'"
+                    f"Found existing dummy work item '{description}' for target '{target_description}' at index '{i}'"
                 )
             item_index = i
             break
