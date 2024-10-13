@@ -20,21 +20,19 @@ from src.browser.locate import (
 from src.browser.navigate import open_timesheet_page, expand_project, collapse_project
 from src.lib.project_helpers import _format_date_silly, _format_timespan_silly
 from src.browser.update import add_work_item_entry, add_new_work_item
-from src.config.input import get_args, read_input_file, add_project_column, split_projects, add_dummy_jira_ref, input_validate_app_ref
+from src.config.input import get_args #, read_input_file, add_project_column, split_projects, add_dummy_jira_ref, input_validate_app_ref
+from src.input.prep_data import prep_data
+from src.models.kiara_project import KiaraProject
 
 
 def main():
     file_name, sheet_name = get_args()
-    work_items = add_project_column(read_input_file(file_name, sheet_name))
-    work_items = add_dummy_jira_ref(work_items)
-    work_items = input_validate_app_ref(work_items)
-    print(work_items)
-    projects = split_projects(work_items)
+    projects = prep_data(file_name, sheet_name)
     
     asyncio.run(async_main(projects))
 
 
-async def async_main(projects: dict):
+async def async_main(projects: list[KiaraProject]):
     async with async_playwright() as p:
         browser = await init_playwright(p)
         ctx = browser.contexts[0]
@@ -46,28 +44,30 @@ async def async_main(projects: dict):
         # TODO: Add validation to see if we're on landing page, skip if not
         # await open_timesheet_page(page, ctx)
 
-
-        for project, work_items in projects.items():
-            log.info(f"Processing project '{project}'.")
+        for project in projects:
+            project_name = project.name
+            work_items = project.items
+            log.info(f"Processing project '{project_name}'.")
             # grab task locator
             task_locator = await get_task_locator(
-                page, project
+                page, project_name
             )
             # grab task index
             task_index = await get_task_index(task_locator)
 
             # open project
             await expand_project(
-                page, project
+                page, project_name
             )
 
             date_indices = await get_date_column_indices(page)
 
             for work_item in work_items:
+                print(work_item)
                 log.info(
-                    f"Processing work item '{work_item["Description"]}' for date '{work_item["Date"]}'"
+                    f"Processing work item '{work_item.description}' for date '{work_item.date}'"
                 )
-                log.debug(f"{work_item.items()}.")
+                log.debug(f"{work_item}.")
                 work_item_exists, work_item_index = await test_work_item_exists(
                     page, work_item, date_indices, task_index
                 )
@@ -80,7 +80,7 @@ async def async_main(projects: dict):
                     await add_new_work_item(page, work_item, task_index, date_indices)
 
             await collapse_project(
-              page, project
+              page, project_name
             )
         await browser.close()
 

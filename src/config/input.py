@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import math
 from itertools import groupby
 import pandas as pd
+from src.exceptions.custom_exceptions import DataFrameFirstNanIndexTypeError
 
 log = logging.getLogger(__name__)
 
@@ -41,52 +42,3 @@ def get_args():
     log.info("Parsed provided arguments.")
 
     return file_name, sheet_name
-
-
-def read_input_file(file_name: str, sheet_name: str):
-    try:
-        df = pd.read_excel(io=file_name, sheet_name=sheet_name, usecols="A:G")
-        first_nan_index = df["Description"].isna().idxmax()
-        df = df[:first_nan_index -1]
-        log.info(f"Read input file '{file_name}' - sheet '{sheet_name}'.")
-    except FileNotFoundError as e:
-        log.error(f"File '{file_name}' not found.")
-        raise e
-    except Exception as e:
-        log.error(f"Error reading file '{file_name}'.")
-        raise e
-    return df.to_dict("records")
-
-
-def add_project_column(work_items: list, project: str = "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"):
-    """if unspecified, set default project"""
-    for work_item in work_items:
-        if (isinstance(work_item["Project"], float) and math.isnan(work_item["Project"])) or work_item["Project"] == "":
-            log.debug(f"Adding default project '{project}' to work item '{work_item['Description']}'.")
-            work_item["Project"] = project
-    return work_items
-
-
-def add_dummy_jira_ref(work_items: list):
-    for work_item in work_items:
-        if pd.isna(work_item["JiraRef"]):
-            work_item["JiraRef"] = ""
-    return work_items
-
-
-def input_validate_app_ref(work_items: list):
-    for work_item in work_items:
-        if pd.isna(work_item["AppRef"]):
-            work_item["AppRef"] = ""
-        else:
-            work_item["AppRef"] = str(int(work_item["AppRef"]))
-    return work_items
-
-
-def split_projects(work_items: list):
-    grouped_work_items = sorted(work_items, key=lambda x: x["Project"])
-    grouped_work_items = {k: list(v) for k, v in groupby(grouped_work_items, key=lambda x: x["Project"])}
-
-    for k, v in grouped_work_items.items():
-        log.info(f"Input contains project '{k}' with {len(v)} work items.")
-    return grouped_work_items
