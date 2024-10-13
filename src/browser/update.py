@@ -123,10 +123,23 @@ async def add_new_work_item(
     # update jira ref
     # skip if JiraRef is 0 len str
     if work_item["JiraRef"]:
+        line_item_locator_str = f'input[name="taak[{task_index}].prestatie[{work_item_index}].incident.lineItem"]'
         line_item_locator = page.locator(
-            f'input[name="taak[{task_index}].prestatie[{work_item_index}].incident.lineItem"]'
+            line_item_locator_str
         )
+        try:
+            element_handle = await line_item_locator.element_handle()
+            if element_handle:
+                log.debug(f"Found element by '{line_item_locator_str}', handle is {element_handle}")
+        except Exception as e:
+            log.error(f"Failed to find element by '{line_item_locator_str}'")
         await line_item_locator.fill(work_item["JiraRef"])
+    
+    if work_item["AppRef"]:
+        line_item_locator = page.locator(
+            f'input[name="taak[{task_index}].prestatie[{work_item_index}].toepassing.nummer"]'
+        )
+        await line_item_locator.fill(work_item["AppRef"])
 
     # add time
     await add_work_item_entry(

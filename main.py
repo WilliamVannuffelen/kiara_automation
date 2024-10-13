@@ -20,13 +20,15 @@ from src.browser.locate import (
 from src.browser.navigate import open_timesheet_page, expand_project, collapse_project
 from src.lib.project_helpers import _format_date_silly, _format_timespan_silly
 from src.browser.update import add_work_item_entry, add_new_work_item
-from src.config.input import get_args, read_input_file, add_project_column, split_projects, add_dummy_jira_ref
+from src.config.input import get_args, read_input_file, add_project_column, split_projects, add_dummy_jira_ref, input_validate_app_ref
 
 
 def main():
     file_name, sheet_name = get_args()
-    work_items = add_project_column(read_input_file(file_name, "2024-09-30"))
+    work_items = add_project_column(read_input_file(file_name, sheet_name))
     work_items = add_dummy_jira_ref(work_items)
+    work_items = input_validate_app_ref(work_items)
+    print(work_items)
     projects = split_projects(work_items)
     
     asyncio.run(async_main(projects))
