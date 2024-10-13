@@ -2,7 +2,7 @@ import logging
 
 from playwright.async_api import Page
 
-from src.browser.locate import find_work_item
+from src.browser.locate import find_work_item, _get_highest_work_item_index
 from src.lib.project_helpers import _format_date_silly, _format_timespan_silly
 
 log = logging.getLogger(__name__)
@@ -40,14 +40,22 @@ async def add_work_item_entry(
 
 
 async def check_work_item_box(
-    page: Page, work_item: dict, task_index: int, date_indices: dict
+    page: Page, work_item: dict, task_index: int, date_indices: dict, last_work_item_index: int
 ) -> None:
-    # find & check button of elem number 0 to copy to a new task
-    # take index 1 because new item will become 0
+    # need to take last element to avoid broken state due to odd behaviour:
+    # A new item bumping the selected copy dummy down an index
+    # only changes the index AFTER the second copy action
+    # forces a page reload
+    # in other words - if it gets bumped down everything breaks
+    work_item_locator = page.locator(
+      f'input[name="taak[{task_index}].prestatie[{last_work_item_index}].omschrijving"]'
+    )
     checkbox_locator = page.locator(
-        f'input[name="taak[{task_index}].prestatie[1].toBeCopied"]'
+        f'input[name="taak[{task_index}].prestatie[{last_work_item_index}].toBeCopied"]'
     )
     try:
+        dupe_description = await work_item_locator.get_attribute("value")
+        log.debug(f"Will copy existing work item '{dupe_description}'")
         await checkbox_locator.check()
         log.debug(f"Checked checkbox for work item '{work_item['Description']}'")
     except Exception as e:
@@ -58,10 +66,10 @@ async def check_work_item_box(
 
 
 async def remember_copied_name(
-    page: Page, work_item: dict, task_index: int, date_indices: dict
+    page: Page, work_item: dict, task_index: int, date_indices: dict, last_work_item_index: int
 ) -> str:
     description_locator = page.locator(
-        f'input[name="taak[{task_index}].prestatie[1].omschrijving"]'
+        f'input[name="taak[{task_index}].prestatie[{last_work_item_index}].omschrijving"]'
     )
     copied_work_item_orig_name = await description_locator.get_attribute("value")
     copied_work_item_name = f"Copy {copied_work_item_orig_name}"
@@ -73,9 +81,12 @@ async def remember_copied_name(
 async def add_new_work_item(
     page: Page, work_item: dict, task_index: int, date_indices: dict
 ):
-    await check_work_item_box(page, work_item, task_index, date_indices)
+    # grab last index
+    last_work_item_index = await _get_highest_work_item_index(page, task_index)
+
+    await check_work_item_box(page, work_item, task_index, date_indices, last_work_item_index)
     copied_work_item_name = await remember_copied_name(
-        page, work_item, task_index, date_indices
+        page, work_item, task_index, date_indices, last_work_item_index
     )
 
     try:
@@ -110,10 +121,12 @@ async def add_new_work_item(
         log.error(e)
 
     # update jira ref
-    line_item_locator = page.locator(
-        f'input[name="taak[{task_index}].prestatie[{work_item_index}].incident.lineItem"]'
-    )
-    await line_item_locator.fill(work_item["JiraRef"])
+    # skip if JiraRef is 0 len str
+    if work_item["JiraRef"]:
+        line_item_locator = page.locator(
+            f'input[name="taak[{task_index}].prestatie[{work_item_index}].incident.lineItem"]'
+        )
+        await line_item_locator.fill(work_item["JiraRef"])
 
     # add time
     await add_work_item_entry(
