@@ -20,20 +20,19 @@ from src.browser.locate import (
 from src.browser.navigate import open_timesheet_page, expand_project, collapse_project
 from src.lib.project_helpers import _format_date_silly, _format_timespan_silly
 from src.browser.update import add_work_item_entry, add_new_work_item
-from src.config.input import get_args
-
-def get_work_items(path: str, date: str):
-    df = pd.read_excel(io=path, sheet_name=date, usecols="A:E")
-    return df.to_dict("records")
+from src.config.input import get_args, read_input_file, add_project_column, split_projects, add_dummy_jira_ref
 
 
 def main():
     file_name, sheet_name = get_args()
-    work_items = get_work_items(file_name, "2024-09-30")
-    asyncio.run(async_main(work_items))
+    work_items = add_project_column(read_input_file(file_name, "2024-09-30"))
+    work_items = add_dummy_jira_ref(work_items)
+    projects = split_projects(work_items)
+    
+    asyncio.run(async_main(projects))
 
 
-async def async_main(work_items: list):
+async def async_main(projects: dict):
     async with async_playwright() as p:
         browser = await init_playwright(p)
         ctx = browser.contexts[0]
@@ -45,39 +44,42 @@ async def async_main(work_items: list):
         # TODO: Add validation to see if we're on landing page, skip if not
         # await open_timesheet_page(page, ctx)
 
-        # # grab task locator
-        # task_locator = await get_task_locator(
-        #     page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
-        # )
-        # # grab task index
-        # task_index = await get_task_index(task_locator)
 
-        # # open project
-        # await expand_project(
-        #     page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
-        # )
+        for project, work_items in projects.items():
+            log.info(f"Processing project '{project}'.")
+            # grab task locator
+            task_locator = await get_task_locator(
+                page, project
+            )
+            # grab task index
+            task_index = await get_task_index(task_locator)
 
-        # date_indices = await get_date_column_indices(page)
+            # open project
+            await expand_project(
+                page, project
+            )
 
-        # for work_item in work_items:
-        #     log.info(
-        #         f"Processing work item '{work_item["Description"]}' for date '{work_item["Date"]}'"
-        #     )
-        #     log.debug(f"{work_item.items()}.")
-        #     work_item_exists, work_item_index = await test_work_item_exists(
-        #         page, work_item, date_indices, task_index
-        #     )
+            date_indices = await get_date_column_indices(page)
 
-        #     if work_item_exists:
-        #         await add_work_item_entry(
-        #             page, work_item, date_indices, task_index, work_item_index
-        #         )
-        #     else:
-        #         await add_new_work_item(page, work_item, task_index, date_indices)
+            for work_item in work_items:
+                log.info(
+                    f"Processing work item '{work_item["Description"]}' for date '{work_item["Date"]}'"
+                )
+                log.debug(f"{work_item.items()}.")
+                work_item_exists, work_item_index = await test_work_item_exists(
+                    page, work_item, date_indices, task_index
+                )
 
-        #await collapse_project(
-        #    page, "CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam"
-        #)
+                if work_item_exists:
+                    await add_work_item_entry(
+                        page, work_item, date_indices, task_index, work_item_index
+                    )
+                else:
+                    await add_new_work_item(page, work_item, task_index, date_indices)
+
+            await collapse_project(
+              page, project
+            )
         await browser.close()
 
 
