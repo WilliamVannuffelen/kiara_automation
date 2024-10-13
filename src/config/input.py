@@ -45,7 +45,9 @@ def get_args():
 
 def read_input_file(file_name: str, sheet_name: str):
     try:
-        df = pd.read_excel(io=file_name, sheet_name=sheet_name, usecols="A:F")
+        df = pd.read_excel(io=file_name, sheet_name=sheet_name, usecols="A:G")
+        first_nan_index = df["Description"].isna().idxmax()
+        df = df[:first_nan_index -1]
         log.info(f"Read input file '{file_name}' - sheet '{sheet_name}'.")
     except FileNotFoundError as e:
         log.error(f"File '{file_name}' not found.")
@@ -69,6 +71,15 @@ def add_dummy_jira_ref(work_items: list):
     for work_item in work_items:
         if pd.isna(work_item["JiraRef"]):
             work_item["JiraRef"] = ""
+    return work_items
+
+
+def input_validate_app_ref(work_items: list):
+    for work_item in work_items:
+        if pd.isna(work_item["AppRef"]):
+            work_item["AppRef"] = ""
+        else:
+            work_item["AppRef"] = str(int(work_item["AppRef"]))
     return work_items
 
 
