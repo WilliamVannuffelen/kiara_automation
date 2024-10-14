@@ -1,6 +1,8 @@
-from playwright.async_api import Page
-from typing import Optional, cast
 import logging
+from typing import cast
+
+from playwright.async_api import Page
+
 from src.objects.kiara_project import KiaraProject
 from src.objects.kiara_work_item import KiaraWorkItem, TestWorkItemResult
 from src.browser.locate import (
