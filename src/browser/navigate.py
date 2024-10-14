@@ -1,9 +1,9 @@
 import logging
 
-from playwright.async_api import Page, Locator
+from playwright.async_api import Page
 
-import src.browser.locate as locate
 from src.lib.helpers import _terminate_script
+from src.browser.locate import get_task_index
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ async def open_timesheet_page(page: Page, ctx) -> None:
 
 async def expand_project(page: Page, search_string: str) -> None:
     cell_locator = page.get_by_role("cell", name=search_string, exact=True)
-    await locate.get_task_index(cell_locator)
+    await get_task_index(cell_locator)
 
     row_locator = cell_locator.locator("..")
     try:
@@ -32,7 +32,7 @@ async def expand_project(page: Page, search_string: str) -> None:
 
 async def collapse_project(page: Page, search_string: str) -> None:
     cell_locator = page.get_by_role("cell", name=search_string, exact=True)
-    await locate.get_task_index(cell_locator)
+    await get_task_index(cell_locator)
 
     row_locator = cell_locator.locator("..")
     try:

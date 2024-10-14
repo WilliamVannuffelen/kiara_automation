@@ -1,4 +1,4 @@
-from src.models.kiara_work_item import KiaraWorkItem
+from src.objects.kiara_work_item import KiaraWorkItem
 
 class KiaraProject:
     def __init__(self, name: str):

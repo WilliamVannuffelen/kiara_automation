@@ -1,10 +1,6 @@
 import logging
 import argparse
 from datetime import datetime, timedelta
-import math
-from itertools import groupby
-import pandas as pd
-from src.exceptions.custom_exceptions import DataFrameFirstNanIndexTypeError
 
 log = logging.getLogger(__name__)
 

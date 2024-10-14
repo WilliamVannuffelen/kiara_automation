@@ -2,9 +2,10 @@ import logging
 
 from playwright.async_api import Page
 
-from src.browser.locate import find_work_item, _get_highest_work_item_index, is_target_element_present
 from src.lib.project_helpers import is_empty_value
 from src.objects.kiara_work_item import KiaraWorkItem
+from src.browser.locate import find_work_item, _get_highest_work_item_index, is_target_element_present
+
 
 log = logging.getLogger(__name__)
 

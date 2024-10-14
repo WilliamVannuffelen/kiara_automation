@@ -1,8 +1,11 @@
-import logging
 import re
+import logging
+from typing import cast
+
 from playwright.async_api import Locator, Page
+
 from src.objects.kiara_work_item import KiaraWorkItem, TestWorkItemResult
-from typing import Optional, cast
+
 
 log = logging.getLogger(__name__)
 
