@@ -1,25 +1,28 @@
 import logging
 
-from playwright.async_api import Page, Locator
+from playwright.async_api import Page
 
-import src.browser.locate as locate
 from src.lib.helpers import _terminate_script
+from src.browser.locate import get_task_index
 
 log = logging.getLogger(__name__)
+
 
 async def open_timesheet_page(page: Page, ctx) -> None:
     try:
         await page.get_by_role("cell", name="knop ga verder").locator("a").click()
         log.info("Navigated to timesheet page.")
     except Exception as e:
-        log.error("Failed to navigate to timesheet page. Ensure you're on the landing page after ACM/IDM authentication.")
+        log.error(
+            "Failed to navigate to timesheet page. Ensure you're on the landing page after ACM/IDM authentication."
+        )
         log.error(e)
         _terminate_script(1)
 
 
 async def expand_project(page: Page, search_string: str) -> None:
     cell_locator = page.get_by_role("cell", name=search_string, exact=True)
-    await locate.get_task_index(cell_locator)
+    await get_task_index(cell_locator)
 
     row_locator = cell_locator.locator("..")
     try:
@@ -30,13 +33,16 @@ async def expand_project(page: Page, search_string: str) -> None:
         log.error(e)
         _terminate_script(1)
 
+
 async def collapse_project(page: Page, search_string: str) -> None:
     cell_locator = page.get_by_role("cell", name=search_string, exact=True)
-    await locate.get_task_index(cell_locator)
+    await get_task_index(cell_locator)
 
     row_locator = cell_locator.locator("..")
     try:
-        await row_locator.get_by_role("cell", name="Collapse").get_by_role("img").click()
+        await row_locator.get_by_role("cell", name="Collapse").get_by_role(
+            "img"
+        ).click()
         log.info(f"Collapsed project '{search_string}'.")
     except Exception as e:
         log.error(f"Failed to collapse project '{search_string}'.")
