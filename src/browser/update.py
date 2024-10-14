@@ -4,7 +4,11 @@ from playwright.async_api import Page
 
 from src.lib.project_helpers import is_empty_value
 from src.objects.kiara_work_item import KiaraWorkItem
-from src.browser.locate import find_work_item, _get_highest_work_item_index, is_target_element_present
+from src.browser.locate import (
+    find_work_item,
+    _get_highest_work_item_index,
+    is_target_element_present,
+)
 
 
 log = logging.getLogger(__name__)
@@ -17,8 +21,8 @@ async def add_work_item_entry(
     task_index: int,
     work_item_index: int,
 ) -> None:
-    #item_date = await _format_date_silly(work_item.date)
-    #time_spent = await _format_timespan_silly(work_item.time_spent)
+    # item_date = await _format_date_silly(work_item.date)
+    # time_spent = await _format_timespan_silly(work_item.time_spent)
 
     try:
         column_index = date_indices[work_item.formatted_date]
@@ -42,7 +46,11 @@ async def add_work_item_entry(
 
 
 async def check_work_item_box(
-    page: Page, work_item: KiaraWorkItem, task_index: int, date_indices: dict, last_work_item_index: int
+    page: Page,
+    work_item: KiaraWorkItem,
+    task_index: int,
+    date_indices: dict,
+    last_work_item_index: int,
 ) -> None:
     # need to take last element to avoid broken state due to odd behaviour:
     # A new item bumping the selected copy dummy down an index
@@ -50,7 +58,7 @@ async def check_work_item_box(
     # forces a page reload
     # in other words - if it gets bumped down everything breaks
     work_item_locator = page.locator(
-      f'input[name="taak[{task_index}].prestatie[{last_work_item_index}].omschrijving"]'
+        f'input[name="taak[{task_index}].prestatie[{last_work_item_index}].omschrijving"]'
     )
     checkbox_locator = page.locator(
         f'input[name="taak[{task_index}].prestatie[{last_work_item_index}].toBeCopied"]'
@@ -61,14 +69,16 @@ async def check_work_item_box(
         await checkbox_locator.check()
         log.debug(f"Checked checkbox for work item '{work_item.description}'")
     except Exception as e:
-        log.error(
-            f"Failed to check checkbox for work item '{work_item.description}'"
-        )
+        log.error(f"Failed to check checkbox for work item '{work_item.description}'")
         log.error(e)
 
 
 async def remember_copied_name(
-    page: Page, work_item: KiaraWorkItem, task_index: int, date_indices: dict, last_work_item_index: int
+    page: Page,
+    work_item: KiaraWorkItem,
+    task_index: int,
+    date_indices: dict,
+    last_work_item_index: int,
 ) -> str:
     description_locator = page.locator(
         f'input[name="taak[{task_index}].prestatie[{last_work_item_index}].omschrijving"]'
@@ -80,10 +90,17 @@ async def remember_copied_name(
     return copied_work_item_name
 
 
-async def enter_cell_text(page: Page, work_item: KiaraWorkItem, task_index: int, work_item_index: int, work_item_column_key: str, cell_type_key: str) -> None:
+async def enter_cell_text(
+    page: Page,
+    work_item: KiaraWorkItem,
+    task_index: int,
+    work_item_index: int,
+    work_item_column_key: str,
+    cell_type_key: str,
+) -> None:
     locator_strings = {
         "jira_ref": f"input[name='taak[{task_index}].prestatie[{work_item_index}].incident.lineItem']",
-        "app_ref": f"input[name='taak[{task_index}].prestatie[{work_item_index}].toepassing.nummer']"
+        "app_ref": f"input[name='taak[{task_index}].prestatie[{work_item_index}].toepassing.nummer']",
     }
     has_input = is_empty_value(work_item, work_item_column_key)
     if not has_input:
@@ -94,13 +111,16 @@ async def enter_cell_text(page: Page, work_item: KiaraWorkItem, task_index: int,
     if item_exists:
         try:
             await locator.fill(getattr(work_item, work_item_column_key))
-            log.debug(f"Updated {cell_type_key} of work item '{work_item.description}' - '{getattr(work_item,work_item_column_key)}' with value '{getattr(work_item, work_item_column_key)}'")
+            log.debug(
+                f"Updated {cell_type_key} of work item '{work_item.description}' - '{getattr(work_item,work_item_column_key)}' with value '{getattr(work_item, work_item_column_key)}'"
+            )
         except Exception as e:
-            log.error(f"Failed to update {cell_type_key} of work item '{work_item.description}' - '{getattr(work_item, work_item_column_key)}'")
+            log.error(
+                f"Failed to update {cell_type_key} of work item '{work_item.description}' - '{getattr(work_item, work_item_column_key)}'"
+            )
             log.error(e)
     else:
         pass
-
 
 
 async def add_new_work_item(
@@ -109,7 +129,9 @@ async def add_new_work_item(
     # grab last index
     last_work_item_index = await _get_highest_work_item_index(page, task_index)
 
-    await check_work_item_box(page, work_item, task_index, date_indices, last_work_item_index)
+    await check_work_item_box(
+        page, work_item, task_index, date_indices, last_work_item_index
+    )
     copied_work_item_name = await remember_copied_name(
         page, work_item, task_index, date_indices, last_work_item_index
     )
@@ -145,9 +167,13 @@ async def add_new_work_item(
         )
         log.error(e)
 
-    await enter_cell_text(page, work_item, task_index, work_item_index, "jira_ref", "jira_ref")
-    await enter_cell_text(page, work_item, task_index, work_item_index, "app_ref", "app_ref")
-    
+    await enter_cell_text(
+        page, work_item, task_index, work_item_index, "jira_ref", "jira_ref"
+    )
+    await enter_cell_text(
+        page, work_item, task_index, work_item_index, "app_ref", "app_ref"
+    )
+
     if work_item.app_ref:
         line_item_locator = page.locator(
             f'input[name="taak[{task_index}].prestatie[{work_item_index}].toepassing.nummer"]'

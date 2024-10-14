@@ -32,7 +32,9 @@ def truncate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         df = df.iloc[:first_nan_index]
         log.debug(f"Truncated DataFrame at index '{first_nan_index}'.")
     except ValueError as e:
-        raise DataFrameFirstNanIndexTypeError(f"First NaN index in 'Description' column is not an integer: '{first_nan_index}'") from e
+        raise DataFrameFirstNanIndexTypeError(
+            f"First NaN index in 'Description' column is not an integer: '{first_nan_index}'"
+        ) from e
     return df
 
 
@@ -46,10 +48,11 @@ def convert_to_work_item(df: pd.DataFrame) -> list[KiaraWorkItem]:
             jira_ref=row["JiraRef"],
             app_ref=row["AppRef"],
             date=row["Date"],
-            time_spent=row["TimeSpent"]
+            time_spent=row["TimeSpent"],
         )
         work_items.append(work_item)
     return work_items
+
 
 def group_work_items(work_items: list[KiaraWorkItem]) -> list[KiaraProject]:
     projects = {}

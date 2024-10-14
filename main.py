@@ -22,7 +22,7 @@ async def async_main(projects: list[KiaraProject]):
         browser, page = await init_playwright(p)
 
         # TODO: Add validation to see if we're on landing page, skip if not
-        #await open_timesheet_page(page, ctx)
+        # await open_timesheet_page(page, ctx)
 
         for project in projects:
             await process_project(page, project)

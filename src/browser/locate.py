@@ -10,7 +10,9 @@ from src.objects.kiara_work_item import KiaraWorkItem, TestWorkItemResult
 log = logging.getLogger(__name__)
 
 
-async def is_target_element_present(page: Page, locator: Locator, locator_string: str) -> bool:
+async def is_target_element_present(
+    page: Page, locator: Locator, locator_string: str
+) -> bool:
     try:
         await locator.element_handle()
         log.debug(f"Element found for '{locator_string}'")
@@ -82,7 +84,7 @@ async def test_work_item_exists(
     except Exception as e:
         log.error(f"Error finding work item: {e}")
         return TestWorkItemResult(False, None)
-    
+
     return TestWorkItemResult(work_item_index is not None, work_item_index)
 
 
@@ -104,7 +106,7 @@ async def find_work_item(
     log.debug(f"Last item index in current project table '{last_item_index}'")
 
     item_index = None
-    for i in range(0, int(last_item_index)+1):
+    for i in range(0, int(last_item_index) + 1):
         work_item_locator = page.locator(
             f'input[name="taak[{task_index}].prestatie[{i}].omschrijving"]'
         )

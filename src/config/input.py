@@ -12,18 +12,21 @@ def get_datetime_week_start() -> str:
     monday = today - timedelta(days=days_to_monday)
     return monday.strftime("%Y-%m-%d")
 
+
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--file_name","-f",
+        "--file_name",
+        "-f",
         type=str,
         help="The name of the input Excel file.",
         required=False,
-        #default="timsheet (version 2) (version 2) (version 2) (version 1)(AutoRecovered) OK-2024(AutoRecovered).xlsx", # lol
-        default="~/wvl/devel/tempo/t_upload.xlsx"
+        # default="timsheet (version 2) (version 2) (version 2) (version 1)(AutoRecovered) OK-2024(AutoRecovered).xlsx", # lol
+        default="~/wvl/devel/tempo/t_upload.xlsx",
     )
     parser.add_argument(
-        "--sheet_name","-s",
+        "--sheet_name",
+        "-s",
         type=str,
         help="The name of the excel sheet to read from.",
         required=False,

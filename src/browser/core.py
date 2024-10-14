@@ -6,7 +6,8 @@ from src.exceptions.custom_exceptions import DebugBrowserConnectionError
 
 log = logging.getLogger(__name__)
 
-async def init_playwright(playwright: Playwright) -> tuple[Browser,Page]:
+
+async def init_playwright(playwright: Playwright) -> tuple[Browser, Page]:
     try:
         browser = await playwright.chromium.connect_over_cdp("http://localhost:9222")
         log.debug("Connected to browser.")
