@@ -1,8 +1,8 @@
 import logging
 import re
 from playwright.async_api import Locator, Page
-from src.models.kiara_work_item import KiaraWorkItem
-from typing import Optional
+from src.objects.kiara_work_item import KiaraWorkItem, TestWorkItemResult
+from typing import Optional, cast
 
 log = logging.getLogger(__name__)
 
@@ -55,27 +55,32 @@ async def _get_highest_work_item_index(page: Page, task_index: int) -> int:
     work_item_selector = (
         f'input[name^="taak[{task_index}].prestatie["][name$="].omschrijving"]'
     )
+
     work_items = await page.query_selector_all(work_item_selector)
 
     last_item_name = await work_items[-1].get_attribute("name")
+    log.debug(f"Last item name: {last_item_name}")
 
     match = re.search(r"prestatie\[(\d+)\]", last_item_name)
     last_item_index = match.group(1)
+    log.debug(f"Matches: {match.groups()}")
+    log.debug(f"Last item index: {last_item_index}")
 
     return last_item_index
 
 
 async def test_work_item_exists(
     page: Page, work_item: KiaraWorkItem, date_indices: dict, task_index: int
-) -> tuple[bool, Optional[int]]:
+) -> TestWorkItemResult:
 
     try:
         work_item_index = await find_work_item(page, work_item, task_index)
+        log.debug(f"Work item index: {work_item_index}")
     except Exception as e:
         log.error(f"Error finding work item: {e}")
-        return False, None
+        return TestWorkItemResult(False, None)
     
-    return work_item_index is not None, work_item_index
+    return TestWorkItemResult(work_item_index is not None, work_item_index)
 
 
 async def find_work_item(
@@ -100,7 +105,8 @@ async def find_work_item(
         work_item_locator = page.locator(
             f'input[name="taak[{task_index}].prestatie[{i}].omschrijving"]'
         )
-        val = await work_item_locator.get_attribute("value")
+
+        val = cast(str, await work_item_locator.get_attribute("value"))
         if val.lower() == description.lower():
             if is_copy:
                 log.info(
@@ -115,4 +121,5 @@ async def find_work_item(
         log.info(f"No existing work item found for description '{description}'")
         return None
     else:
+        log.info(f"Found existing work item '{description}' at index '{item_index}'")
         return item_index

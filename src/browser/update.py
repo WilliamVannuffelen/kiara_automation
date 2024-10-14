@@ -3,8 +3,8 @@ import logging
 from playwright.async_api import Page
 
 from src.browser.locate import find_work_item, _get_highest_work_item_index, is_target_element_present
-from src.lib.project_helpers import _format_date_silly, _format_timespan_silly, is_empty_value
-from src.models.kiara_work_item import KiaraWorkItem
+from src.lib.project_helpers import is_empty_value
+from src.objects.kiara_work_item import KiaraWorkItem
 
 log = logging.getLogger(__name__)
 
@@ -16,26 +16,26 @@ async def add_work_item_entry(
     task_index: int,
     work_item_index: int,
 ) -> None:
-    item_date = await _format_date_silly(work_item.date)
-    time_spent = await _format_timespan_silly(work_item.time_spent)
+    #item_date = await _format_date_silly(work_item.date)
+    #time_spent = await _format_timespan_silly(work_item.time_spent)
 
     try:
-        column_index = date_indices[item_date]
+        column_index = date_indices[work_item.formatted_date]
     except KeyError:
-        print(f"Date {item_date} not found in selected week")
+        print(f"Date {work_item.formatted_date} not found in selected week")
         return  # fix proper exc handling etc.
     work_item_locator = page.locator(
         f'input[name="taak[{task_index}].prestatie[{work_item_index}].dagPrestatie[{column_index}].gepresteerdeTijd"]'
     )
     try:
-        await work_item_locator.fill(time_spent)
+        await work_item_locator.fill(work_item.time_spent)
         await work_item_locator.blur()
         log.info(
-            f"Added time to existing work item '{work_item.description}' on '{work_item.date}' - {time_spent}h"
+            f"Added time to existing work item '{work_item.description}' on '{work_item.date}' - {work_item.time_spent}h"
         )
     except Exception as e:
         log.error(
-            f"Failed to add time to existing work item '{work_item.description}' on '{work_item.date}' - {time_spent}h"
+            f"Failed to add time to existing work item '{work_item.description}' on '{work_item.date}' - {work_item.time_spent}h"
         )
         log.error(e)
 
