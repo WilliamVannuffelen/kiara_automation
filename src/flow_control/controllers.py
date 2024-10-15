@@ -9,10 +9,14 @@ from src.browser.locate import (
     get_task_index,
     get_task_locator,
     test_work_item_exists,
+    get_expand_general_tasks_locator,
 )
-from src.browser.navigate import collapse_project, expand_project
+from src.browser.navigate import collapse_project, expand_project, expand_general_tasks
 from src.browser.update import add_new_work_item, add_work_item_entry
-from src.exceptions.custom_exceptions import InputDataProcessingError
+from src.exceptions.custom_exceptions import (
+    InputDataProcessingError,
+    BrowserNavigationError,
+)
 from src.input.prep_data import (
     convert_to_work_item,
     group_work_items,
@@ -49,6 +53,12 @@ async def run_browser_automation(projects: list[KiaraProject]):
 
         for project in projects:
             await process_project(page, project)
+
+        try:
+            general_tasks_locator = await get_expand_general_tasks_locator(page)
+            await expand_general_tasks(page, general_tasks_locator)
+        except BrowserNavigationError as e:
+            log.error(f"Failed to expand general tasks: '{e}'")
 
         await browser.close()
 

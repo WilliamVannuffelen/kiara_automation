@@ -5,6 +5,10 @@ from typing import cast
 from playwright.async_api import Locator, Page
 
 from src.objects.kiara_work_item import KiaraWorkItem, TestWorkItemResult
+from src.exceptions.custom_exceptions import (
+    GeneralTasksNavigationError,
+    TargetElementNotFoundError,
+)
 
 log = logging.getLogger(__name__)
 
@@ -13,13 +17,18 @@ async def is_target_element_present(
     page: Page, locator: Locator, locator_string: str
 ) -> bool:
     try:
-        await locator.element_handle()
+        await locator.element_handle(timeout=3000)
         log.debug(f"Element found for '{locator_string}'")
         return True
-    except Exception as e:
+    except TimeoutError:
         log.debug(f"Element not found for '{locator_string}'")
-        log.debug(e)
+        # raise TargetElementNotFoundError(f"Element not found for '{locator_string}'") from e
         return False
+    except Exception as e:
+        log.error(f"Error finding element '{locator_string}': {e}")
+        raise TargetElementNotFoundError(
+            f"Error checking presence of element for '{locator_string}'"
+        ) from e
 
 
 async def get_task_locator(page: Page, search_string: str) -> Locator:
@@ -127,3 +136,18 @@ async def find_work_item(
     else:
         log.info(f"Found existing work item '{description}' at index '{item_index}'")
         return item_index
+
+
+async def get_expand_general_tasks_locator(page: Page) -> Locator:
+    general_tasks_expand_locator = page.get_by_role(
+        "cell", name="Algemene Taken", exact=True
+    ).locator("..")
+    # await get_task_index(general_tasks_expand_locator)
+    # row_locator = cell
+    target_present = await is_target_element_present(
+        page, general_tasks_expand_locator, "General tasks expand button"
+    )
+    if target_present:
+        return general_tasks_expand_locator
+    log.error("General tasks expand button not found")
+    raise GeneralTasksNavigationError("General tasks expand button not found")
