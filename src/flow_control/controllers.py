@@ -1,20 +1,56 @@
 import logging
 from typing import cast
 
-from playwright.async_api import Page
+from playwright.async_api import Page, async_playwright
 
-from src.objects.kiara_project import KiaraProject
-from src.objects.kiara_work_item import KiaraWorkItem, TestWorkItemResult
+from src.browser.core import init_playwright
 from src.browser.locate import (
-    get_task_locator,
-    get_task_index,
     get_date_column_indices,
+    get_task_index,
+    get_task_locator,
     test_work_item_exists,
 )
-from src.browser.navigate import expand_project, collapse_project
-from src.browser.update import add_work_item_entry, add_new_work_item
+from src.browser.navigate import collapse_project, expand_project
+from src.browser.update import add_new_work_item, add_work_item_entry
+from src.exceptions.custom_exceptions import InputDataProcessingError
+from src.input.prep_data import (
+    convert_to_work_item,
+    group_work_items,
+    read_input_file,
+    truncate_dataframe,
+    validate_df_columns,
+)
+from src.objects.kiara_project import KiaraProject
+from src.objects.kiara_work_item import KiaraWorkItem
 
 log = logging.getLogger(__name__)
+
+
+def process_input_data(file_name: str, sheet_name: str) -> list[KiaraProject]:
+    try:
+        df = read_input_file(file_name, sheet_name)
+        df = truncate_dataframe(df)
+        validate_df_columns(df)
+        work_items = convert_to_work_item(df)
+        projects = group_work_items(work_items)
+        return projects
+    except Exception as e:
+        raise InputDataProcessingError(
+            f"Failed to process input data: '{type(e)}'"
+        ) from e
+
+
+async def run_browser_automation(projects: list[KiaraProject]):
+    async with async_playwright() as p:
+        browser, page = await init_playwright(p)
+
+        # TODO: Add validation to see if we're on landing page, skip if not
+        # await open_timesheet_page(page, ctx)
+
+        for project in projects:
+            await process_project(page, project)
+
+        await browser.close()
 
 
 async def process_work_item(

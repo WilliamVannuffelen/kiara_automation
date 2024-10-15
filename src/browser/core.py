@@ -1,6 +1,6 @@
 import logging
 
-from playwright.async_api import Playwright, Browser, Page
+from playwright.async_api import Browser, Page, Playwright
 
 from src.exceptions.custom_exceptions import DebugBrowserConnectionError
 

@@ -1,42 +1,30 @@
-import logging
 import asyncio
+import logging
 
-from playwright.async_api import async_playwright
-
-from src.lib.helpers import init_logging, _terminate_script
-from src.browser.core import init_playwright
 from src.config.input import get_args
-from src.input.prep_data import prep_data
-from src.objects.kiara_project import KiaraProject
-from src.flow_control.controllers import process_project
+from src.exceptions.custom_exceptions import InputDataProcessingError
+from src.flow_control.controllers import process_input_data, run_browser_automation
+from src.lib.helpers import _terminate_script, init_logging
 
 
 def main():
     file_name, sheet_name = get_args()
-    projects = prep_data(file_name, sheet_name)
-    asyncio.run(async_main(projects))
 
-
-async def async_main(projects: list[KiaraProject]):
-    async with async_playwright() as p:
-        browser, page = await init_playwright(p)
-
-        # TODO: Add validation to see if we're on landing page, skip if not
-        # await open_timesheet_page(page, ctx)
-
-        for project in projects:
-            await process_project(page, project)
-
-        await browser.close()
+    try:
+        projects = process_input_data(file_name, sheet_name)
+    except InputDataProcessingError as e:
+        log.error(f"Terminating error. Details: '{e}'.")
+        _terminate_script(1)
+    asyncio.run(run_browser_automation(projects))
 
 
 if __name__ == "__main__":
-    init_logging(name="main", log_level="debug")
+    init_logging(log_level="debug")
     try:
-        log = logging.getLogger("main")
+        log = logging.getLogger(__name__)
         log.info("Script started.")
     except Exception as e:
-        print(f"Failed to initiate logger. {e}")
+        print(f"Failed to initiate logger: '{e}'.")
         _terminate_script(1)
 
     main()

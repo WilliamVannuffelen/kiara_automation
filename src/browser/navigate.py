@@ -2,8 +2,8 @@ import logging
 
 from playwright.async_api import Page
 
-from src.lib.helpers import _terminate_script
 from src.browser.locate import get_task_index
+from src.lib.helpers import _terminate_script
 
 log = logging.getLogger(__name__)
 

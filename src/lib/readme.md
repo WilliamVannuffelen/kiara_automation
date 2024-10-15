@@ -32,7 +32,7 @@ if __name__ == "__main__":
         print(f"Failed to initiate logger.")
         print(e)
         help._terminate_script(1)
-    
+
     vault_url = help.get_env_var({"name": "VAULT_URL", "required": True})
 
     secretclient = azhelp.get_secretclient(vault_url=vault_url)
