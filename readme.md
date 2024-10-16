@@ -26,6 +26,23 @@ playwright codegen https://kiara.vlaanderen.be
 ```
 
 # How to - Update Kiara timesheets
+
+## Set default values in config file
+
+./src/config/config.ini
+```ini
+[General]
+preferred_project = CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam
+# Will open this project at the end of the script run.
+
+[Logging]
+log_level = debug
+
+[Input]
+input_file = ~/wvl/devel/tempo/t_upload.xlsx
+
+```
+
 Input = xlsx file formatted as such.
 
 Column A is optional
