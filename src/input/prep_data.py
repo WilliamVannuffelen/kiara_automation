@@ -1,11 +1,14 @@
 import logging
-from datetime import datetime, timedelta
-import math
-from itertools import groupby
+
 import pandas as pd
-from src.exceptions.custom_exceptions import DataFrameFirstNanIndexTypeError
-from src.models.kiara_work_item import KiaraWorkItem
-from src.models.kiara_project import KiaraProject
+
+from src.exceptions.custom_exceptions import (
+    DataFrameFirstNanIndexTypeError,
+    InputFileLoadError,
+    InvalidDataFrameColumnsError,
+)
+from src.objects.kiara_project import KiaraProject
+from src.objects.kiara_work_item import KiaraWorkItem
 
 log = logging.getLogger(__name__)
 
@@ -16,10 +19,13 @@ def read_input_file(file_name: str, sheet_name: str) -> pd.DataFrame:
         log.info(f"Read input file '{file_name}' - sheet '{sheet_name}'.")
     except FileNotFoundError as e:
         log.error(f"File '{file_name}' not found: {e}.")
-        raise
+        raise InputFileLoadError("Failed to process input data.") from e
+    except ValueError as e:
+        log.error(f"Failed to load input data: {e}.")
+        raise InputFileLoadError("Failed to process input data.") from e
     except Exception as e:
         log.error(f"Error reading file '{file_name}': {e}.")
-        raise
+        raise e
     return df
 
 
@@ -38,9 +44,28 @@ def truncate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def validate_df_columns(df: pd.DataFrame) -> None:
+    expected_columns = [
+        "Day",
+        "Project",
+        "Description",
+        "JiraRef",
+        "AppRef",
+        "Date",
+        "TimeSpent",
+    ]
+
+    df.columns = df.columns.str.strip()
+
+    if set(df.columns) != set(expected_columns):
+        log.error(f"Columns in DataFrame do not match expected columns: '{df.columns}'")
+        raise InvalidDataFrameColumnsError()
+    log.debug("DataFrame columns validated.")
+
+
 def convert_to_work_item(df: pd.DataFrame) -> list[KiaraWorkItem]:
     work_items = []
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         work_item = KiaraWorkItem(
             day=row["Day"],
             project=row["Project"],
@@ -62,12 +87,3 @@ def group_work_items(work_items: list[KiaraWorkItem]) -> list[KiaraProject]:
             projects[project_name] = KiaraProject(project_name)
         projects[project_name].add_work_item(work_item)
     return list(projects.values())
-
-
-def prep_data(file_name: str, sheet_name: str) -> list[KiaraProject]:
-    df = read_input_file(file_name, sheet_name)
-    print(df)
-    df = truncate_dataframe(df)
-    work_items = convert_to_work_item(df)
-    projects = group_work_items(work_items)
-    return projects

@@ -1,11 +1,14 @@
-import re
 import logging
-from src.models.kiara_work_item import KiaraWorkItem
+
+from src.objects.kiara_work_item import KiaraWorkItem
 
 log = logging.getLogger(__name__)
 
 
 def is_empty_value(work_item: KiaraWorkItem, work_item_key: str) -> bool:
+    """
+    Determine whether there's any data to input into selected cell.
+    """
     if getattr(work_item, work_item_key):
         log.debug(getattr(work_item, work_item_key))
         log.debug(
