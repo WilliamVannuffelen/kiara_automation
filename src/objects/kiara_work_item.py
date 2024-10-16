@@ -6,7 +6,6 @@ from typing import Optional
 import pandas as pd
 
 from src.exceptions.custom_exceptions import AppRefInvalidValueError
-from src.objects.general_tasks import general_tasks
 
 log = logging.getLogger(__name__)
 
@@ -90,7 +89,10 @@ class KiaraWorkItem:
         if (isinstance(value, float) and math.isnan(value)) or value == "":
             self._project = default_project
             log.debug(
-                f"Project for '{self.description}' is NaN or empty, setting to default project: '{default_project}'"
+                (
+                    f"Project for '{self.description}' is NaN or empty, "
+                    f"setting to default project: '{default_project}'"
+                )
             )
         else:
             self._project = str(value)

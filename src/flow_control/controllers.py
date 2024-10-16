@@ -12,15 +12,10 @@ from src.browser.locate import (
 )
 from src.browser.navigate import (
     open_timesheet_page,
-    collapse_project,
-    expand_project,
     expand_collapse_section,
 )
 from src.browser.update import add_new_work_item, add_work_item_entry
-from src.exceptions.custom_exceptions import (
-    InputDataProcessingError,
-    BrowserNavigationError,
-)
+from src.exceptions.custom_exceptions import InputDataProcessingError
 from src.input.prep_data import (
     convert_to_work_item,
     group_work_items,
@@ -126,11 +121,11 @@ async def process_project(page: Page, project: KiaraProject):
     )
     task_index = await get_task_index(locator=task_locator)
 
-    await expand_project(page=page, search_string=project_name)
+    await expand_collapse_section(page=page, search_string=project_name, collapse=False)
 
     date_indices = await get_date_column_indices(page)
 
     for work_item in work_items:
         await process_work_item(page, work_item, date_indices, task_index)
 
-    await collapse_project(page, project_name)
+    await expand_collapse_section(page=page, search_string=project_name, collapse=True)

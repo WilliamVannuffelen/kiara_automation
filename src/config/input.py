@@ -21,7 +21,8 @@ def get_args():
         type=str,
         help="The name of the input Excel file.",
         required=False,
-        # default="timsheet (version 2) (version 2) (version 2) (version 1)(AutoRecovered) OK-2024(AutoRecovered).xlsx", # lol
+        # default="timsheet (version 2) (version 2) (version 2)
+        # (version 1)(AutoRecovered) OK-2024(AutoRecovered).xlsx", # lol
         default="~/wvl/devel/tempo/t_upload.xlsx",
     )
     parser.add_argument(
