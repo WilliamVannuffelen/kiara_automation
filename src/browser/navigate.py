@@ -31,5 +31,5 @@ async def expand_collapse_section(
         log.info(
             f"{'Collapsed' if collapse else 'Expanded'} section '{search_string}'."
         )
-    except TimeoutError as e:
+    except PlaywrightTimeoutError as e:
         log.error(f"Failed to collapse or expand section. {e}")
