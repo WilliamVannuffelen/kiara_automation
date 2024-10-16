@@ -1,16 +1,3 @@
-# 0.0.2
-- Added some logging
-- Added some exception handling
-- Refactored to be modular
-
-# 0.0.1
-
-- No logging
-- No exception handling
-- No support for multiple projects (= tasks) yet
-- No arg parsing yet - has hardcoded project name & input file values.
-
-
 # Browser with debug tools for manipulation via playwright
 
 
@@ -43,10 +30,14 @@ Input = xlsx file formatted as such.
 
 Column A is optional
 
-- yyyy-MM-dd formatted dates
+- Date in yyyy-MM-dd format
+- Description is the name of the line item in Kiara
+- JiraRef is optional, used for WiV bookings
 - Timespent in hours, minimum increments of .25 hours
+- Project is the name of the WBS
+- AppRef is optional. Used for AMaaS application bookings.
 
-![alt text](image-1.png)
+(![alt text](image-3.png))
 
 ## Run debug chrome
 
@@ -61,13 +52,37 @@ Make sure you're on the landing page in the chrome debug browser:
 
 ## Run the script
 
+`-f`, `--file_name` = path to the input file
+
+`-s`, `--sheet_name` = path to the input sheet
+
 ```sh
-py main.py
+py main.py -f ./t_upload.xlsx  -s 2024-09-30
 ```
 
-![gif](utput.gif)
+![gif](output.gif)
 
 Gif made with:
 ```sh
 ffmpeg -i ~/Documents/Screenshots/Screen\ Recording\ 2024-10-09\ at\ 22.08.42.mov -pix_fmt rgb8 -r 10 output.gif && gifsicle -O3 output.gif -output.gif
 ```
+
+# Changelog
+
+# 1.0.0
+
+- Added support for arbitrary projects
+- Added support for AMaaS Project bookings
+- Added support for non-project bookings
+
+# 0.0.2
+- Added some logging
+- Added some exception handling
+- Refactored to be modular
+
+# 0.0.1
+
+- No logging
+- No exception handling
+- No support for multiple projects (= tasks) yet
+- No arg parsing yet - has hardcoded project name & input file values.
