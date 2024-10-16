@@ -1,28 +1,14 @@
 import logging
 import sys
 
-from src.lib.ado_logging import AzureDevOpsLogFormatter, AzureDevopsLogger
 
 log = logging.getLogger(__name__)
 
 
 def init_logging(
-    log_class: str = "default",
-    log_formatter: str = "default",
     log_level: str = "info",
 ) -> None:
-    match log_class.lower():
-        case "azuredevops":
-            logging.setLoggerClass(AzureDevopsLogger)
-        case _:
-            pass
-
-    match log_formatter.lower():
-        case "azuredevops":
-            stream_handler = logging.StreamHandler()
-            stream_handler.setFormatter(AzureDevOpsLogFormatter())
-        case _:
-            stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler()
 
     log_levels = {
         "debug": logging.DEBUG,

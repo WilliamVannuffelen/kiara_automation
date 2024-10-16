@@ -15,6 +15,5 @@ def is_empty_value(work_item: KiaraWorkItem, work_item_key: str) -> bool:
             f"{work_item_key} is not empty for work item '{work_item.description}'"
         )
         return True
-    else:
-        log.debug(f"{work_item_key} is empty for work item '{work_item.description}'")
-        return False
+    log.debug(f"{work_item_key} is empty for work item '{work_item.description}'")
+    return False
