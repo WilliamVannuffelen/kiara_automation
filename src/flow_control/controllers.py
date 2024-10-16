@@ -72,6 +72,7 @@ async def run_browser_automation(projects: list[KiaraProject]):
             page=page, search_string="Project-gerelateerde Taken", collapse=False
         )
 
+        # TODO - Add var for preferred/main project name
         await expand_collapse_section(
             page=page,
             search_string="CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam",
