@@ -23,7 +23,7 @@ def get_args():
         required=False,
         # default="timsheet (version 2) (version 2) (version 2)
         # (version 1)(AutoRecovered) OK-2024(AutoRecovered).xlsx", # lol
-        default="~/wvl/devel/tempo/t_upload.xlsx",
+        default=None,
     )
     parser.add_argument(
         "--sheet_name",
