@@ -87,11 +87,3 @@ def group_work_items(work_items: list[KiaraWorkItem]) -> list[KiaraProject]:
             projects[project_name] = KiaraProject(project_name)
         projects[project_name].add_work_item(work_item)
     return list(projects.values())
-
-
-# def prep_data(file_name: str, sheet_name: str) -> list[KiaraProject]:
-#     df = read_input_file(file_name, sheet_name)
-#     df = truncate_dataframe(df)
-#     work_items = convert_to_work_item(df)
-#     projects = group_work_items(work_items)
-#     return projects

@@ -9,9 +9,12 @@ from src.browser.locate import (
     get_task_index,
     get_task_locator,
     test_work_item_exists,
-    get_expand_general_tasks_locator,
 )
-from src.browser.navigate import collapse_project, expand_project, expand_general_tasks
+from src.browser.navigate import (
+    collapse_project,
+    expand_project,
+    expand_collapse_section,
+)
 from src.browser.update import add_new_work_item, add_work_item_entry
 from src.exceptions.custom_exceptions import (
     InputDataProcessingError,
@@ -52,13 +55,32 @@ async def run_browser_automation(projects: list[KiaraProject]):
         # await open_timesheet_page(page, ctx)
 
         for project in projects:
-            await process_project(page, project)
+            if not project.is_general_task:
+                await process_project(page, project)
 
-        try:
-            general_tasks_locator = await get_expand_general_tasks_locator(page)
-            await expand_general_tasks(page, general_tasks_locator)
-        except BrowserNavigationError as e:
-            log.error(f"Failed to expand general tasks: '{e}'")
+        await expand_collapse_section(
+            page=page, search_string="Project-gerelateerde Taken", collapse=True
+        )
+        await expand_collapse_section(
+            page=page, search_string="Algemene Taken", collapse=False
+        )
+
+        for project in projects:
+            if project.is_general_task:
+                await process_project(page, project)
+
+        await expand_collapse_section(
+            page=page, search_string="Algemene Taken", collapse=True
+        )
+        await expand_collapse_section(
+            page=page, search_string="Project-gerelateerde Taken", collapse=False
+        )
+
+        await expand_collapse_section(
+            page=page,
+            search_string="CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam",
+            collapse=False,
+        )
 
         await browser.close()
 
@@ -77,15 +99,20 @@ async def process_work_item(
     if test_work_item_result.exists:
         log.debug(f"Work item '{work_item.description}' already exists.")
         await add_work_item_entry(
-            page,
-            work_item,
-            date_indices,
-            task_index,
-            cast(int, test_work_item_result.index),
+            page=page,
+            work_item=work_item,
+            date_indices=date_indices,
+            task_index=task_index,
+            work_item_index=cast(int, test_work_item_result.index),
         )
     else:
         log.debug(f"Work item '{work_item.description}' does not exist yet. Creating.")
-        await add_new_work_item(page, work_item, task_index, date_indices)
+        await add_new_work_item(
+            page=page,
+            work_item=work_item,
+            task_index=task_index,
+            date_indices=date_indices,
+        )
 
 
 async def process_project(page: Page, project: KiaraProject):
@@ -93,10 +120,12 @@ async def process_project(page: Page, project: KiaraProject):
     work_items = project.items
     log.info(f"Processing project '{project_name}'.")
 
-    task_locator = await get_task_locator(page, project_name)
-    task_index = await get_task_index(task_locator)
+    task_locator = await get_task_locator(
+        page=page, search_string=project_name, is_general_task=project.is_general_task
+    )
+    task_index = await get_task_index(locator=task_locator)
 
-    await expand_project(page, project_name)
+    await expand_project(page=page, search_string=project_name)
 
     date_indices = await get_date_column_indices(page)
 

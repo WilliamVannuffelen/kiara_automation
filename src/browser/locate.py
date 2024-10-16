@@ -31,13 +31,22 @@ async def is_target_element_present(
         ) from e
 
 
-async def get_task_locator(page: Page, search_string: str) -> Locator:
-    cell_locator = page.get_by_role("cell", name=search_string, exact=True)
+async def get_task_locator(
+    page: Page, search_string: str, is_general_task: bool
+) -> Locator:
+    if is_general_task:
+        cell_locator = (
+            page.get_by_role("cell", name=search_string, exact=True)
+            .nth(0)
+            .locator("..")
+        )
+    else:
+        cell_locator = page.get_by_role("cell", name=search_string, exact=True)
     return cell_locator
 
 
 async def get_task_index(locator: Locator) -> int:
-    inner_html = await locator.inner_html()
+    inner_html = await locator.nth(0).inner_html()
 
     pattern = re.compile(r"taak\[(\d+)\]")
     task_index = pattern.search(inner_html)
@@ -151,3 +160,25 @@ async def get_expand_general_tasks_locator(page: Page) -> Locator:
         return general_tasks_expand_locator
     log.error("General tasks expand button not found")
     raise GeneralTasksNavigationError("General tasks expand button not found")
+
+
+async def get_section_expand_collapse_button(
+    page: Page, search_string: str, collapse: bool
+) -> Locator:
+    section_row_locator = page.get_by_role(
+        "cell", name=search_string, exact=True
+    ).locator("..")
+    button_locator = section_row_locator.get_by_role(
+        "cell", name="Expand" if not collapse else "Collapse"
+    ).get_by_role("img")
+
+    target_present = await is_target_element_present(
+        page,
+        button_locator,
+        f"Section {'expand' if not collapse else 'collapse'} button",
+    )
+    if target_present:
+        return button_locator
+    raise GeneralTasksNavigationError(
+        f"Section {'expand' if not collapse else 'collapse'} button not found."
+    )
