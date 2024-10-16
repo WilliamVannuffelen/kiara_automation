@@ -11,6 +11,7 @@ from src.browser.locate import (
     test_work_item_exists,
 )
 from src.browser.navigate import (
+    open_timesheet_page,
     collapse_project,
     expand_project,
     expand_collapse_section,
@@ -52,7 +53,7 @@ async def run_browser_automation(projects: list[KiaraProject]):
         browser, page = await init_playwright(p)
 
         # TODO: Add validation to see if we're on landing page, skip if not
-        # await open_timesheet_page(page, ctx)
+        await open_timesheet_page(page=page)
 
         for project in projects:
             if not project.is_general_task:

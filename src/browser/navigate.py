@@ -8,7 +8,7 @@ from src.lib.helpers import _terminate_script
 log = logging.getLogger(__name__)
 
 
-async def open_timesheet_page(page: Page, ctx) -> None:
+async def open_timesheet_page(page: Page) -> None:
     try:
         await page.get_by_role("cell", name="knop ga verder").locator("a").click()
         log.info("Navigated to timesheet page.")
