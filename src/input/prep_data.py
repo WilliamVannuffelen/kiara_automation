@@ -18,14 +18,14 @@ def read_input_file(file_name: str, sheet_name: str) -> pd.DataFrame:
         df = pd.read_excel(io=file_name, sheet_name=sheet_name, usecols="A:G")
         log.info(f"Read input file '{file_name}' - sheet '{sheet_name}'.")
     except FileNotFoundError as e:
-        log.error(f"File '{file_name}' not found: {e}.")
-        raise InputFileLoadError("Failed to process input data.") from e
+        log.exception(f"File '{file_name}' not found: {e}.")
+        raise InputFileLoadError from e
     except ValueError as e:
-        log.error(f"Failed to load input data: {e}.")
-        raise InputFileLoadError("Failed to process input data.") from e
+        log.exception(f"Failed to load input data: {e}.")
+        raise InputFileLoadError from e
     except Exception as e:
-        log.error(f"Error reading file '{file_name}': {e}.")
-        raise e
+        log.exception("Failed to load input data.")
+        raise InputFileLoadError from e
     return df
 
 
@@ -38,9 +38,10 @@ def truncate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         df = df.iloc[:first_nan_index]
         log.debug(f"Truncated DataFrame at index '{first_nan_index}'.")
     except ValueError as e:
-        raise DataFrameFirstNanIndexTypeError(
-            f"First NaN index in 'Description' column is not an integer: '{first_nan_index}'"
-        ) from e
+        log.exception(
+            "First NaN index in 'Description' column is not an integer: '{first_nan_index}'"
+        )
+        raise DataFrameFirstNanIndexTypeError from e
     return df
 
 
@@ -58,8 +59,10 @@ def validate_df_columns(df: pd.DataFrame) -> None:
     df.columns = df.columns.str.strip()
 
     if set(df.columns) != set(expected_columns):
-        log.error(f"Columns in DataFrame do not match expected columns: '{df.columns}'")
-        raise InvalidDataFrameColumnsError()
+        log.exception(
+            f"Columns in DataFrame do not match expected columns: '{df.columns}'"
+        )
+        raise InvalidDataFrameColumnsError
     log.debug("DataFrame columns validated.")
 
 
