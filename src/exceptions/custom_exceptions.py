@@ -1,6 +1,9 @@
 class InputDataProcessingError(Exception):
     """Base class for exceptions in input data processing."""
 
+    def __init__(self, message="Failed to process input data."):
+        super().__init__(message)
+
 
 class InputFileLoadError(InputDataProcessingError):
     """Exception raised for errors in loading input files."""
