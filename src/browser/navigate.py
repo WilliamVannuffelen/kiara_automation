@@ -7,7 +7,13 @@ from src.lib.helpers import terminate_script
 
 log = logging.getLogger(__name__)
 
+# TODO: Open debug browser and kiara from inside the application
+# likely prevents bug where ctx[0] doesn't exist despite page being open
+# also more user friendly for the less technically inclined
+# can add config.ini setting for alias/path to open debug chrome
 
+# TODO: - add check to see if we're on this page, if we're on any other page
+# show popup asking for confirmation to navigate to this page (user might lose data if they've entered shit manually)
 async def open_timesheet_page(page: Page) -> None:
     try:
         await page.get_by_role("cell", name="knop ga verder").locator("a").click()
