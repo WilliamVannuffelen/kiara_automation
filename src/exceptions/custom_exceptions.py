@@ -56,3 +56,7 @@ class GeneralTasksNavigationError(BrowserNavigationError):
 
 class TargetElementNotFoundError(PageElementLocatorError):
     """Exception raised when a target item is not found."""
+
+
+class BrowserFillCellError(Exception):
+    """Exception raised for invalid input values."""

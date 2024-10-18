@@ -1,6 +1,6 @@
 import logging
 
-from playwright.async_api import Page
+from playwright.async_api import Page, Locator, TimeoutError as PlaywrightTimeoutError
 
 from src.browser.locate import (
     _get_highest_work_item_index,
@@ -106,7 +106,7 @@ async def enter_cell_text(
         return
     locator_str = locator_strings[work_item_column_key]
     locator = page.locator(locator_str)
-    item_exists = await is_target_element_present(page, locator, locator_str)
+    item_exists = await is_target_element_present(locator, locator_str)
     if item_exists:
         try:
             await locator.fill(getattr(work_item, work_item_column_key))
@@ -183,3 +183,14 @@ async def add_new_work_item(
     await add_work_item_entry(
         page, work_item, date_indices, task_index, work_item_index
     )
+
+
+async def enter_cell_text_generic(
+    locator: Locator, input_value: str, input_identifier: str
+):
+    try:
+        await locator.fill(input_value)
+        log.debug(f"Updated {input_identifier} with value '{input_value}'")
+    except PlaywrightTimeoutError as e:
+        log.error(f"Failed to update {input_identifier} with value '{input_value}'")
+        raise e

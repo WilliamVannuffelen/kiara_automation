@@ -1,13 +1,12 @@
 import os
 import configparser
-from typing import Optional
 
 from src.objects.config import ConfigOption
 
 
 def make_config_dict(
     config: configparser.ConfigParser, options: list[ConfigOption], check_option: bool
-) -> dict[str, Optional[str]]:
+) -> dict[str, str]:
     return {
         option.option: option.process_config_property(config, check_option)
         for option in options
@@ -29,9 +28,10 @@ def read_config():
         config=config,
         options=[
             ConfigOption("Logging", "log_level", "info"),
-            ConfigOption("General", "preferred_project", None),
-            ConfigOption("Input", "input_file", None),
+            ConfigOption("General", "preferred_project", ""),
+            ConfigOption("Input", "input_file", ""),
             ConfigOption("Browser", "launch_type", "internal"),
+            ConfigOption("General", "phone_number", ""),
         ],
         check_option=config_file_read_success,
     )

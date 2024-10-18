@@ -1,16 +1,15 @@
 import configparser
-from typing import Optional
 
 
 class ConfigOption:
-    def __init__(self, section: str, option: str, default: Optional[str]):
+    def __init__(self, section: str, option: str, default: str):
         self.section = section
         self.option = option
         self.default = default
 
     def process_config_property(
         self, config: configparser.ConfigParser, config_file_read_success: bool
-    ) -> Optional[str]:
+    ) -> str:
         if not config_file_read_success:
             return self.default
         try:
@@ -34,7 +33,7 @@ class ConfigOption:
         return value
 
     def print_warning(
-        self, warning_type: str, section: str, option: str, default: Optional[str]
+        self, warning_type: str, section: str, option: str, default: str
     ) -> None:
         if warning_type == "section":
             print(
