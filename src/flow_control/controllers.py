@@ -65,6 +65,7 @@ async def run_browser_automation(
     launch_type = input_config_values["launch_type"]
     phone_number = input_config_values["phone_number"]
     preferred_project = input_config_values["preferred_project"]
+    auto_submit = input_config_values["auto_submit"]
 
     async with async_playwright() as p:
         browser, page = await init_playwright(playwright=p, launch_type=launch_type)
@@ -105,8 +106,12 @@ async def run_browser_automation(
             search_string=preferred_project,
             collapse=False,
         )
-        if launch_type == "internal":
+
+        if auto_submit:
             await save_timesheet_provisionally(page=page)
+
+        if launch_type == "internal":
+            await asyncio.sleep(3600)
         else:
             log.info("Browser launched externally. Disconnecting.")
 

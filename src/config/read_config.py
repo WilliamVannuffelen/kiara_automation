@@ -32,6 +32,7 @@ def read_config():
             ConfigOption("Input", "input_file", ""),
             ConfigOption("Browser", "launch_type", "internal"),
             ConfigOption("General", "phone_number", ""),
+            ConfigOption("General", "auto_submit", "false"),
         ],
         check_option=config_file_read_success,
     )
