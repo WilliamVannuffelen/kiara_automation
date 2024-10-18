@@ -107,7 +107,7 @@ async def run_browser_automation(
             collapse=False,
         )
 
-        if auto_submit:
+        if auto_submit == "true":
             await save_timesheet_provisionally(page=page)
 
         if launch_type == "internal":

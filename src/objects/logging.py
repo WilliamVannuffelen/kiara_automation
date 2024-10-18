@@ -12,13 +12,11 @@ class ExceptionDebugStackTraceHandler(logging.StreamHandler):
             and record.exc_info is None
             and logging.getLogger().level == logging.DEBUG
         ):
-            record.exc_info = None  # Ensure exc_info is None for log.error()
+            record.exc_info = None
         elif (
             record.levelno == logging.ERROR
             and record.exc_info
             and logging.getLogger().level != logging.DEBUG
         ):
-            record.exc_info = (
-                None  # Ensure exc_info is None for log.exception() unless debug level
-            )
+            record.exc_info = None
         super().emit(record)

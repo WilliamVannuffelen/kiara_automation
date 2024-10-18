@@ -20,8 +20,6 @@ def init_logging(
         "critical": logging.CRITICAL,
     }
     try:
-        #        file_handler = logging.FileHandler("/Users/wvannuffelen2/output.log")
-
         logging.basicConfig(
             format="%(asctime)20s - %(levelname)s - %(name)s.%(funcName)s - %(message)s",
             handlers=[stream_handler],
