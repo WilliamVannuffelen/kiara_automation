@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 # also more user friendly for the less technically inclined
 # can add config.ini setting for alias/path to open debug chrome
 
+
 # TODO: - add check to see if we're on this page, if we're on any other page
 # show popup asking for confirmation to navigate to this page (user might lose data if they've entered shit manually)
 async def open_timesheet_page(page: Page) -> None:

@@ -1,3 +1,10 @@
+class ConfigFileProcessingError(Exception):
+    """Base class for exceptions in config file processing."""
+
+    def __init__(self, message="Failed to process config file."):
+        super().__init__(message)
+
+
 class InputDataProcessingError(Exception):
     """Base class for exceptions in input data processing."""
 

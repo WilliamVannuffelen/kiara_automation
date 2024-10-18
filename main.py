@@ -3,7 +3,10 @@ import logging
 
 from src.config.input import get_args
 from src.config.read_config import read_config
-from src.exceptions.custom_exceptions import InputDataProcessingError
+from src.exceptions.custom_exceptions import (
+    InputDataProcessingError,
+    ConfigFileProcessingError,
+)
 from src.flow_control.controllers import process_input_data, run_browser_automation
 from src.lib.helpers import terminate_script, init_logging
 
@@ -18,7 +21,11 @@ def main(input_file_name: str, input_sheet_name: str) -> None:
 
 
 if __name__ == "__main__":
-    config_values = read_config()
+    try:
+        config_values = read_config()
+    except ConfigFileProcessingError as e:
+        print(f"Failed to read config file: '{e}'.")
+        terminate_script(1)
     file_name, sheet_name = get_args()
 
     init_logging(log_level=config_values.get("log_level", "info"))
