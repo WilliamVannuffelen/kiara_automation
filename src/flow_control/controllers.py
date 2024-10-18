@@ -1,6 +1,8 @@
+import re
 import logging
 from typing import cast
 
+import asyncio
 from playwright.async_api import Page, async_playwright
 
 from src.browser.core import init_playwright
@@ -9,13 +11,27 @@ from src.browser.locate import (
     get_task_index,
     get_task_locator,
     test_work_item_exists,
+    get_authentication_method_button,
+    get_phone_number_input_box,
+    get_target_element,
 )
 from src.browser.navigate import (
+    navigate_to_page,
     open_timesheet_page,
     expand_collapse_section,
+    click_navigation_button,
 )
-from src.browser.update import add_new_work_item, add_work_item_entry
-from src.exceptions.custom_exceptions import InputDataProcessingError
+from src.browser.update import (
+    add_new_work_item,
+    add_work_item_entry,
+    enter_cell_text_generic,
+)
+from src.exceptions.custom_exceptions import (
+    InputDataProcessingError,
+    BrowserNavigationError,
+    TargetElementNotFoundError,
+    BrowserFillCellError,
+)
 from src.input.prep_data import (
     convert_to_work_item,
     group_work_items,
@@ -43,9 +59,21 @@ def process_input_data(file_name: str, sheet_name: str) -> list[KiaraProject]:
         ) from e
 
 
-async def run_browser_automation(projects: list[KiaraProject]):
+async def run_browser_automation(
+    input_config_values: dict, projects: list[KiaraProject]
+):
+    launch_type = input_config_values["launch_type"]
+    phone_number = input_config_values["phone_number"]
+    preferred_project = input_config_values["preferred_project"]
+
     async with async_playwright() as p:
-        browser, page = await init_playwright(p)
+        browser, page = await init_playwright(playwright=p, launch_type=launch_type)
+
+        try:
+            if launch_type == "internal":
+                await run_authentication_flow(page=page, phone_number=phone_number)
+        except Exception as e:
+            raise e
 
         # TODO: Add validation to see if we're on landing page, skip if not
         await open_timesheet_page(page=page)
@@ -72,14 +100,91 @@ async def run_browser_automation(projects: list[KiaraProject]):
             page=page, search_string="Project-gerelateerde Taken", collapse=False
         )
 
-        # TODO - Add var for preferred/main project name
         await expand_collapse_section(
             page=page,
-            search_string="CS0126444 - Wonen Cloudzone - dedicated operationeel projectteam",
+            search_string=preferred_project,
             collapse=False,
         )
+        if launch_type == "internal":
+            await save_timesheet_provisionally(page=page)
+        else:
+            log.info("Browser launched externally. Disconnecting.")
 
         await browser.close()
+
+
+async def run_authentication_flow(page: Page, phone_number: str) -> None:
+    """
+    Only supports itsme.
+    """
+    log.info("Running authentication flow.")
+
+    await navigate_to_page(page, "https://kiara.vlaanderen.be")
+    await select_authentication_method(page, "itsme")
+    await auth_with_mfa(page, phone_number)
+
+
+async def select_authentication_method(page: Page, method: str):
+    log.info(f"Selecting authentication method: '{method}'")
+    try:
+        auth_method_locator = await get_authentication_method_button(page, method)
+        await click_navigation_button(
+            nav_button_locator=auth_method_locator,
+            nav_button_name=method,
+            timeout=15000,
+        )
+    except Exception as e:
+        raise BrowserNavigationError from e
+
+
+async def auth_with_mfa(page: Page, phone_number: str) -> None:
+    try:
+        phone_number_input_locator = await get_phone_number_input_box(page)
+        log.info(f"Authenticating with MFA using phone number: '{phone_number}'")
+    except TargetElementNotFoundError as e:
+        raise BrowserNavigationError from e
+    try:
+        await enter_cell_text_generic(
+            phone_number_input_locator, phone_number, "phone number"
+        )
+    except BrowserFillCellError as e:
+        raise e
+    try:
+        trigger_mfa_button_locator = await get_target_element(
+            page.locator("button", has_text="Versturen"), "trigger MFA button"
+        )
+        log.info("Triggered MFA prompt.")
+    except TargetElementNotFoundError as e:
+        raise BrowserNavigationError from e
+    try:
+        await click_navigation_button(
+            nav_button_locator=trigger_mfa_button_locator,
+            nav_button_name="Trigger MFA",
+            timeout=15000,
+        )
+    except Exception as e:
+        raise BrowserNavigationError from e
+
+    await page.wait_for_url(re.compile(r"^https://kiara\.vlaanderen\.be"))
+
+
+async def save_timesheet_provisionally(page: Page) -> None:
+    log.info("Saving timesheet provisionally.")
+    try:
+        save_button_locator = page.get_by_role(
+            "cell", name="knop bewaar voorlopig"
+        ).locator("a")
+        await save_button_locator.element_handle()
+    except TargetElementNotFoundError as e:
+        raise BrowserNavigationError from e
+    try:
+        await click_navigation_button(
+            nav_button_locator=save_button_locator,
+            nav_button_name="Save timesheet provisionally",
+            timeout=15000,
+        )
+    except Exception as e:
+        raise BrowserNavigationError from e
 
 
 async def process_work_item(

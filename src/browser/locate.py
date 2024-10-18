@@ -2,7 +2,7 @@ import logging
 import re
 from typing import cast
 
-from playwright.async_api import Locator, Page
+from playwright.async_api import Locator, Page, TimeoutError as PlaywrightTimeoutError
 
 from src.objects.kiara_work_item import KiaraWorkItem, TestWorkItemResult
 from src.exceptions.custom_exceptions import (
@@ -14,15 +14,14 @@ log = logging.getLogger(__name__)
 
 
 async def is_target_element_present(
-    page: Page, locator: Locator, locator_string: str
+    locator: Locator, locator_string: str, timeout: int = 3000
 ) -> bool:
     try:
-        await locator.element_handle(timeout=3000)
+        await locator.element_handle(timeout=timeout)
         log.debug(f"Element found for '{locator_string}'")
         return True
-    except TimeoutError:
+    except PlaywrightTimeoutError:
         log.debug(f"Element not found for '{locator_string}'")
-        # raise TargetElementNotFoundError(f"Element not found for '{locator_string}'") from e
         return False
     except Exception as e:
         log.error(f"Error finding element '{locator_string}': {e}")
@@ -154,7 +153,7 @@ async def get_expand_general_tasks_locator(page: Page) -> Locator:
     # await get_task_index(general_tasks_expand_locator)
     # row_locator = cell
     target_present = await is_target_element_present(
-        page, general_tasks_expand_locator, "General tasks expand button"
+        general_tasks_expand_locator, "General tasks expand button"
     )
     if target_present:
         return general_tasks_expand_locator
@@ -173,7 +172,6 @@ async def get_section_expand_collapse_button(
     ).get_by_role("img")
 
     target_present = await is_target_element_present(
-        page,
         button_locator,
         f"Section {'expand' if not collapse else 'collapse'} button",
     )
@@ -182,3 +180,53 @@ async def get_section_expand_collapse_button(
     raise GeneralTasksNavigationError(
         f"Section {'expand' if not collapse else 'collapse'} button not found."
     )
+
+
+async def get_authentication_method_button(
+    page: Page, method: str = "itsme"
+) -> Locator:
+    try:
+        if await is_target_element_present(
+            page.locator("span.auth-method__title__text", has_text="itsme®"),
+            f"{method} authentication button",
+        ):
+            return page.locator("span.auth-method__title__text", has_text="itsme®")
+        raise TargetElementNotFoundError(f"{method} authentication button not found.")
+
+    except Exception as e:
+        log.error(f"Failed to select authentication method: {method}. {e}")
+        raise
+
+
+async def get_phone_number_input_box(page: Page) -> Locator:
+    try:
+        if await is_target_element_present(
+            locator=page.locator("input[type='tel'][autocomplete='tel']"),
+            locator_string="phone number input box",
+            timeout=15000,
+        ):
+            return page.locator("input[type='tel'][autocomplete='tel']")
+        raise TargetElementNotFoundError("Phone number input box not found.")
+    except TargetElementNotFoundError as e:
+        raise TargetElementNotFoundError("Phone number input box not found.") from e
+
+    except Exception as e:
+        log.error(f"Failed to find phone number input box. {e}")
+        raise
+
+
+async def get_target_element(
+    locator: Locator, element_identifier: str, timeout: int = 3000
+) -> Locator:
+    try:
+        if await is_target_element_present(
+            locator=locator, locator_string=element_identifier, timeout=timeout
+        ):
+            return locator
+        raise TargetElementNotFoundError(f"{element_identifier} not found.")
+    except TargetElementNotFoundError as e:
+        raise TargetElementNotFoundError(f"{element_identifier} not found.") from e
+
+    except Exception as e:
+        log.error(f"Failed to find {element_identifier}. {e}")
+        raise
