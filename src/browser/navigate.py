@@ -7,30 +7,37 @@ from playwright.async_api import (
     Error as PlaywrightError,
 )
 
-from src.browser.locate import get_section_expand_collapse_button
-from src.lib.helpers import terminate_script
-from src.exceptions.custom_exceptions import BrowserNavigationError
+from src.browser.locate import get_section_expand_collapse_button, get_target_element
+from src.exceptions.custom_exceptions import (
+    BrowserNavigationError,
+    TargetElementNotFoundError,
+    KiaraAutomationError,
+)
 
 log = logging.getLogger(__name__)
 
-# TODO: Open debug browser and kiara from inside the application
-# likely prevents bug where ctx[0] doesn't exist despite page being open
-# also more user friendly for the less technically inclined
-# can add config.ini setting for alias/path to open debug chrome
 
-
-# TODO: - add check to see if we're on this page, if we're on any other page
-# show popup asking for confirmation to navigate to this page (user might lose data if they've entered shit manually)
 async def open_timesheet_page(page: Page) -> None:
+    identifier = "Open timesheet page button"
     try:
-        await page.get_by_role("cell", name="knop ga verder").locator("a").click()
-        log.info("Navigated to timesheet page.")
-    except PlaywrightTimeoutError as e:
-        log.error(
-            "Failed to navigate to timesheet page. Ensure you're on the landing page after ACM/IDM authentication."
+        log.debug("Opening timesheet page.")
+        open_timesheet_locator = await get_target_element(
+            locator=page.get_by_role("cell", name="knop ga verder").locator("a"),
+            element_identifier=identifier,
         )
-        log.error(e, exc_info=True)
-        terminate_script(1)
+        if open_timesheet_locator:
+            await click_navigation_button(
+                nav_button_locator=open_timesheet_locator, nav_button_name=identifier
+            )
+            log.info("Navigated to timesheet page.")
+        else:
+            raise TargetElementNotFoundError(f"{identifier} not found.")
+    except KiaraAutomationError as e:
+        log.warning(
+            "Failed to navigate to timesheet page. "
+            "Ensure you're on the landing page after ACM/IDM authentication."
+        )
+        raise BrowserNavigationError from e
 
 
 async def expand_collapse_section(
@@ -65,4 +72,23 @@ async def click_navigation_button(
         log.info(f"Clicked navigation button: '{nav_button_name}'")
     except PlaywrightTimeoutError as e:
         log.error(f"Failed to click navigation button: '{nav_button_name}'")
+        raise BrowserNavigationError from e
+
+
+async def save_timesheet_provisionally(page: Page) -> None:
+    log.info("Saving timesheet provisionally.")
+    try:
+        save_button_locator = page.get_by_role(
+            "cell", name="knop bewaar voorlopig"
+        ).locator("a")
+        await save_button_locator.element_handle()
+    except TargetElementNotFoundError as e:
+        raise BrowserNavigationError from e
+    try:
+        await click_navigation_button(
+            nav_button_locator=save_button_locator,
+            nav_button_name="Save timesheet provisionally",
+            timeout=15000,
+        )
+    except Exception as e:
         raise BrowserNavigationError from e

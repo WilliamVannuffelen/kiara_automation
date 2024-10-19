@@ -2,15 +2,17 @@ import asyncio
 import logging
 from typing import Dict
 
+from src.input.input_workflow import process_input_data
+from src.browser.workflow import run_browser_automation
 from src.config.input import get_args
 from src.config.read_config import read_config
 from src.exceptions.custom_exceptions import (
-    InputDataProcessingError,
-    ConfigFileProcessingError,
+    KiaraAutomationError,
     BrowserNavigationError,
+    ConfigFileProcessingError,
+    InputDataProcessingError,
 )
-from src.flow_control.controllers import process_input_data, run_browser_automation
-from src.lib.helpers import terminate_script, init_logging
+from src.lib.helpers import init_logging, terminate_script
 from src.objects.kiara_project import KiaraProject
 
 log: logging.Logger = logging.getLogger(__name__)
@@ -60,8 +62,12 @@ if __name__ == "__main__":
         )
         terminate_script(1)
     else:
-        main(
-            input_file_name=file_name,
-            input_sheet_name=sheet_name,
-            input_config_values=config_values,
-        )
+        try:
+            main(
+                input_file_name=file_name,
+                input_sheet_name=sheet_name,
+                input_config_values=config_values,
+            )
+        except KiaraAutomationError as e:
+            log.error(f"Terminating error: '{type(e).__name__}'.")
+            terminate_script(1)

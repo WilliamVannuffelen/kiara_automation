@@ -30,6 +30,23 @@ async def is_target_element_present(
         ) from e
 
 
+async def get_target_element(
+    locator: Locator, element_identifier: str, timeout: int = 3000
+) -> Locator:
+    try:
+        if await is_target_element_present(
+            locator=locator, locator_string=element_identifier, timeout=timeout
+        ):
+            return locator
+        raise TargetElementNotFoundError(f"{element_identifier} not found.")
+    except TargetElementNotFoundError as e:
+        raise TargetElementNotFoundError(f"{element_identifier} not found.") from e
+
+    except Exception as e:
+        log.error(f"Failed to find {element_identifier}. {e}")
+        raise
+
+
 async def get_task_locator(
     page: Page, search_string: str, is_general_task: bool
 ) -> Locator:
@@ -150,8 +167,6 @@ async def get_expand_general_tasks_locator(page: Page) -> Locator:
     general_tasks_expand_locator = page.get_by_role(
         "cell", name="Algemene Taken", exact=True
     ).locator("..")
-    # await get_task_index(general_tasks_expand_locator)
-    # row_locator = cell
     target_present = await is_target_element_present(
         general_tasks_expand_locator, "General tasks expand button"
     )
@@ -212,21 +227,4 @@ async def get_phone_number_input_box(page: Page) -> Locator:
 
     except Exception as e:
         log.error(f"Failed to find phone number input box. {e}")
-        raise
-
-
-async def get_target_element(
-    locator: Locator, element_identifier: str, timeout: int = 3000
-) -> Locator:
-    try:
-        if await is_target_element_present(
-            locator=locator, locator_string=element_identifier, timeout=timeout
-        ):
-            return locator
-        raise TargetElementNotFoundError(f"{element_identifier} not found.")
-    except TargetElementNotFoundError as e:
-        raise TargetElementNotFoundError(f"{element_identifier} not found.") from e
-
-    except Exception as e:
-        log.error(f"Failed to find {element_identifier}. {e}")
         raise
