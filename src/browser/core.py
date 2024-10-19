@@ -17,7 +17,6 @@ async def init_playwright(
                 "http://localhost:9222"
             )
             log.debug("Connected to browser.")
-
         except Exception as e:
             raise DebugBrowserConnectionError("Failed to connect to browser.") from e
         ctx = browser.contexts[0]
@@ -33,9 +32,5 @@ async def init_playwright(
         ctx = await browser.new_context()
         ctx.set_default_timeout(3000)
         page = await ctx.new_page()
-
-    # TODO: Sometimes ctx is completely empty despite the debug browser having the target page open
-    # not sure how to solve this inside code since it requires a new tab to be opened in the debug browser
-    # might just throw a descriptive error and let the user know to open a new tab in the debug browser
 
     return browser, page
