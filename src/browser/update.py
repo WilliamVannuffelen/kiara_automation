@@ -7,6 +7,7 @@ from src.browser.locate import (
     find_work_item,
     is_target_element_present,
 )
+from src.browser.navigate import expand_collapse_section
 from src.lib.project_helpers import is_empty_value
 from src.objects.kiara_work_item import KiaraWorkItem
 
@@ -122,9 +123,9 @@ async def enter_cell_text(
         pass
 
 
-async def add_new_work_item(
+async def copy_work_item(
     page: Page, work_item: KiaraWorkItem, task_index: int, date_indices: dict
-):
+) -> str:
     # grab last index
     last_work_item_index = await _get_highest_work_item_index(page, task_index)
 
@@ -144,7 +145,30 @@ async def add_new_work_item(
     except Exception as e:
         log.error(f"Failed to add new dummy work item '{copied_work_item_name}'")
         log.error(e)
+    return copied_work_item_name
 
+
+async def add_new_work_item(
+    page: Page,
+    work_item: KiaraWorkItem,
+    task_index: int,
+    date_indices: dict,
+    safe_mode: bool,
+):
+    copied_work_item_name = await copy_work_item(
+        page, work_item, task_index, date_indices
+    )
+    # toggling section to flush new item to task array
+    if safe_mode:
+        log.debug("Safe mode enabled - forcing page reload.")
+        await expand_collapse_section(
+            page=page, search_string=work_item.project, collapse=True
+        )
+        await page.wait_for_load_state("networkidle")
+        await expand_collapse_section(
+            page=page, search_string=work_item.project, collapse=False
+        )
+        await page.wait_for_load_state("networkidle")
     work_item_index = await find_work_item(
         page,
         KiaraWorkItem(description=copied_work_item_name),
@@ -183,6 +207,16 @@ async def add_new_work_item(
     await add_work_item_entry(
         page, work_item, date_indices, task_index, work_item_index
     )
+    if safe_mode:
+        log.debug("Safe mode enabled - forcing page reload.")
+        await expand_collapse_section(
+            page=page, search_string=work_item.project, collapse=True
+        )
+        await page.wait_for_load_state("networkidle")
+        await expand_collapse_section(
+            page=page, search_string=work_item.project, collapse=False
+        )
+        await page.wait_for_load_state("networkidle")
 
 
 async def enter_cell_text_generic(

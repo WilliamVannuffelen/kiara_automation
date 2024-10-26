@@ -67,6 +67,10 @@ auto_submit = true # | false
 # internal = Launch a headful browser from inside the script
 # external = connect to existing browser session using the debug port 9222
 launch_type = external # | internal
+# Adds statements to wait toggle projects and wait for a full page reload when adding new work items
+# This is required in certain instances due to how Kiara flushes new items to the DOM
+# Recommendation is to start with false and only enable if needed.
+safe_mode = false # true | false
 
 [Logging]
 log_level = debug # | info | warning | error
@@ -131,6 +135,9 @@ ffmpeg -i ~/Documents/Screenshots/Screen\ Recording\ 2024-10-09\ at\ 22.08.42.mo
 ```
 
 # Changelog
+
+# 1.0.2
+- Added optional 'safe_mode' flag. Solves edge case issues with new work item creation.
 
 # 1.0.1
 - Added support for internally launched browser

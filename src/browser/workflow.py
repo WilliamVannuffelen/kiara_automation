@@ -28,6 +28,7 @@ async def run_browser_automation(
     phone_number = input_config_values["phone_number"]
     preferred_project = input_config_values["preferred_project"]
     auto_submit = input_config_values["auto_submit"]
+    safe_mode = input_config_values["safe_mode"]
 
     async with async_playwright() as p:
         try:
@@ -48,7 +49,7 @@ async def run_browser_automation(
 
         for project in projects:
             if not project.is_general_task:
-                await process_project(page, project)
+                await process_project(page=page, project=project, safe_mode=safe_mode)
 
         await expand_collapse_section(
             page=page, search_string="Project-gerelateerde Taken", collapse=True
@@ -59,7 +60,7 @@ async def run_browser_automation(
 
         for project in projects:
             if project.is_general_task:
-                await process_project(page, project)
+                await process_project(page=page, project=project, safe_mode=safe_mode)
 
         await expand_collapse_section(
             page=page, search_string="Algemene Taken", collapse=True

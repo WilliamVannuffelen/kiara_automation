@@ -25,7 +25,7 @@ def main(
     try:
         projects = process_input_data(input_file_name, input_sheet_name)
     except InputDataProcessingError as e:
-        log.error(f"Terminating error: '{type(e.__cause__).__name__}'.")
+        log.error(f"Terminating error: '{type(e).__name__}'.")
         terminate_script(1)
     try:
         asyncio.run(
