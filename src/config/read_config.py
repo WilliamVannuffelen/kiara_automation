@@ -16,7 +16,7 @@ def make_config_dict(
 def read_config():
     script_dir = os.path.dirname(__file__)
     config_file = os.path.join(script_dir, "config.ini")
-    config = configparser.ConfigParser(inline_comment_prefixes=("#"))
+    config = configparser.ConfigParser(inline_comment_prefixes="#")
 
     config_items = config.read(config_file)
 
@@ -33,6 +33,7 @@ def read_config():
             ConfigOption("Browser", "launch_type", "internal"),
             ConfigOption("General", "phone_number", ""),
             ConfigOption("General", "auto_submit", "false"),
+            ConfigOption("Browser", "safe_mode", "false"),
         ],
         check_option=config_file_read_success,
     )

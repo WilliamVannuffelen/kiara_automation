@@ -18,7 +18,11 @@ log = logging.getLogger(__name__)
 
 
 async def process_work_item(
-    page: Page, work_item: KiaraWorkItem, date_indices: dict, task_index: int
+    page: Page,
+    work_item: KiaraWorkItem,
+    date_indices: dict,
+    task_index: int,
+    safe_mode: bool,
 ):
     log.info(
         f"Processing work item '{work_item.description}' for date '{work_item.date}'"
@@ -44,10 +48,11 @@ async def process_work_item(
             work_item=work_item,
             task_index=task_index,
             date_indices=date_indices,
+            safe_mode=safe_mode,
         )
 
 
-async def process_project(page: Page, project: KiaraProject):
+async def process_project(page: Page, project: KiaraProject, safe_mode: bool):
     project_name = project.name
     work_items = project.items
     log.info(f"Processing project '{project_name}'.")
@@ -62,6 +67,12 @@ async def process_project(page: Page, project: KiaraProject):
     date_indices = await get_date_column_indices(page)
 
     for work_item in work_items:
-        await process_work_item(page, work_item, date_indices, task_index)
+        await process_work_item(
+            page=page,
+            work_item=work_item,
+            date_indices=date_indices,
+            task_index=task_index,
+            safe_mode=safe_mode,
+        )
 
     await expand_collapse_section(page=page, search_string=project_name, collapse=True)
