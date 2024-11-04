@@ -1,6 +1,8 @@
 # Kiara Timesheet automation
 Tool to enter timesheets in Kiara programatically.
 
+Sister project of [Go Timesheet Entry CLI](https://github.com/WilliamVannuffelen/tse)
+
 ![gif](./data/output2.gif)
 
 # How does it work?
