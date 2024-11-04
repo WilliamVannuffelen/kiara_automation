@@ -1,7 +1,7 @@
 # Kiara Timesheet automation
 Tool to enter timesheets in Kiara programatically.
 
-![gif](output.gif)
+![gif](./data/output2.gif)
 
 # How does it work?
 
@@ -98,7 +98,7 @@ Column A is optional
 - `Project` is the name of the WBS
 - `AppRef` is optional. Used for AMaaS application bookings.
 
-(![alt text](image-3.png))
+(![excel_example](./data/image-3.png))
 
 
 ## Internally launched browser
@@ -122,7 +122,7 @@ chrome
 ### 2. Navigate to Kiara and authenticate with ACM/IDM
 Make sure you're on the landing page in the chrome debug browser:
 
-![alt text](image-2.png)
+![kiara_landing](./data/image-2.png)
 
 ### 3. Run the script
 ```sh
@@ -133,6 +133,32 @@ Gifs made with:
 ```sh
 ffmpeg -i ~/Documents/Screenshots/Screen\ Recording\ 2024-10-09\ at\ 22.08.42.mov -pix_fmt rgb8 -r 10 output.gif && gifsicle -O3 output.gif -output.gif
 ```
+
+# Installation
+
+## 1. Install python 3.12
+
+# ! *NOTE*: 3.13 does not work - dependency greenlet will fail to build
+
+## 2. Clone the repo
+```sh
+git clone https://github.com/WilliamVannuffelen/kiara_automation.git && cd kiara_automation
+```
+
+## 3. Create and activate a venv
+```sh
+python3.12 -m venv kiara
+source ./kiara/bin/activate
+```
+
+## 4. Install packages
+```sh
+py -m pip install -r requirements.txt
+```
+
+## 5. Rename `./src/config/config_template.ini` to `./src/config/config.ini` and set desired values
+
+## All done - ready to run the script.
 
 # Changelog
 
