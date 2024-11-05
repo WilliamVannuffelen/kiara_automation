@@ -28,7 +28,8 @@ async def run_browser_automation(
     phone_number = input_config_values["phone_number"]
     preferred_project = input_config_values["preferred_project"]
     auto_submit = input_config_values["auto_submit"]
-    safe_mode = input_config_values["safe_mode"]
+    safe_mode = True if input_config_values["safe_mode"].lower() in ["true"] else False
+    log.debug(f"Safe mode is set to: {safe_mode}, object type: {type(safe_mode)}")
 
     async with async_playwright() as p:
         try:
