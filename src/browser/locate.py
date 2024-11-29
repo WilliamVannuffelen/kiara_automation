@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 from typing import cast
 
 from playwright.async_api import Locator, Page, TimeoutError as PlaywrightTimeoutError
@@ -93,7 +94,8 @@ async def _get_highest_work_item_index(page: Page, task_index: int) -> int:
     work_item_selector = (
         f'input[name^="taak[{task_index}].prestatie["][name$="].omschrijving"]'
     )
-
+    time.sleep(1)
+    await page.wait_for_load_state("networkidle")
     work_items = await page.query_selector_all(work_item_selector)
 
     last_item_name = await work_items[-1].get_attribute("name")
